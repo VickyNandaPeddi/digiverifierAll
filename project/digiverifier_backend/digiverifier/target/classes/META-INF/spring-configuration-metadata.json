@@ -1,0 +1,197 @@
+{
+  "groups": [
+    {
+      "name": "com.dgv.client",
+      "type": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client",
+      "type": "com.aashdit.digiverifier.client.securityDetails.EPFOSecurityConfig",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.EPFOSecurityConfig"
+    },
+    {
+      "name": "com.dgv.client",
+      "type": "com.aashdit.digiverifier.client.securityDetails.ITRSecurityConfig",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.ITRSecurityConfig"
+    },
+    {
+      "name": "com.digiverifier.email",
+      "type": "com.aashdit.digiverifier.email.dto.EmailProperties",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "com.dgv.client.access-code-redirect-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.access-code-relation-redirect-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.access-code-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.access-token",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.access-token-url",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.authorization",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.authorization-type",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.code",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.grant-type",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.password",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.redirect-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.relation-password",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.relation-redirect-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.relation-username",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.response-type",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.state",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.user-details-api",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.user-file-from-uri",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.user-file-from-uri-as-pdf",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.user-files-issued",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.dgv.client.username",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.client.securityDetails.DigilockerClient"
+    },
+    {
+      "name": "com.digiverifier.email.digiverifier-email-sender-id",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.digiverifier-email-title",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.digiverifier-forward-urllink",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.digiverifier-relationship-urllink",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.digiverifier-sender-nick-name",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.mail-content-type",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.mail-smtp-auth",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.mail-starttls-enabled",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.mail-transport-protocol",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.ses-host",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.ses-password",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.ses-username",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    },
+    {
+      "name": "com.digiverifier.email.smtp-port",
+      "type": "java.lang.String",
+      "sourceType": "com.aashdit.digiverifier.email.dto.EmailProperties"
+    }
+  ],
+  "hints": []
+}

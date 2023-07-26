@@ -1,0 +1,223 @@
+<div class="pageHeader">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <p></p>
+      </div>
+    </div>
+  </div>
+</div>
+<!--<div class="container">
+  <div class="row">-->
+<div class="col-md-12">
+  <div class="card">
+    <div class="card-header">
+      <h4>
+        <font size="3" color="orange" class="card-title">New Upload-Conventional</font>
+      </h4>
+      <div class="table-responsive">
+        <table class="table table-bordered mt-2">
+          <thead class="thead-light">
+          <tr>
+            <th>Sno</th>
+            <th>Check Unique Id</th>
+            <th>Check Code</th>
+            <th>Check Name</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Verification Required</th>
+            <th>Verification Performed</th>
+            <th>completed</th>
+            <th>Vendor Name</th>
+            <th>Source Name</th>
+            <th>Add checks</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of newUploadList; let lindex = index;">
+            <td>{{lindex + 1}}</td>
+            <td>{{item.checkUniqueId}}</td>
+            <td>{{item.checkCode}}</td>
+            <td>{{item.checkName}}</td>
+            <td>{{item.checkStatus}}</td>
+            <td>{{item.checkRemarks}}</td>
+            <td>{{item.modeOfVerificationRequired}}</td>
+            <td>{{item.modeOfVerificationPerformed}}</td>
+            <td>{{item.completedDateTime}}</td>
+            <td>
+              <select *ngIf="!vendoruser" class="form-control form-control-sm" #b
+                      (change)=getvendorid(b.value) [formControl]="vendorId">
+                <option [ngValue]="null" disabled>--Select--</option>
+                <option *ngFor="let item of completeData.getVendorData;"
+                        [value]="item.userFirstName+item.userLastName+item.userId">{{ item.userFirstName }} {{ item.userLastName}}
+                  ({{ item.employeeId}})
+                </option>
+              </select>
+            </td>
+            <td>
+              <select *ngIf="!vendoruser" class="form-control form-control-sm" #b
+                      (change)=getsourceid(b.value,lindex,item) [formControl]="sourceId">
+                <option [ngValue]="null" disabled>--Select--</option>
+                <option *ngFor="let item of completeData.sourceData"
+                        [value]="item.sourceName+' '+item.sourceId">{{ item.sourceName}}</option>
+              </select>
+            </td>
+            <td>
+
+              <button type="button" class="btn btn-sm btn-success" #b (click)="opentemplate(tempmodal)"><i
+                class='fas fa-plus'></i></button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<div class="col-md-12">
+  <div class="card">
+    <div class="card-header">
+      <h4>
+        <font size="3" color="orange" class="card-title">Inprogress</font>
+      </h4>
+      <div class="table-responsive">
+        <table class="table table-bordered mt-2">
+          <thead class="thead-light">
+          <tr>
+            <th>Sno</th>
+            <th>Check Unique Id</th>
+            <th>Check Code</th>
+            <th>Check Name</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Verification Required</th>
+            <th>Verification Performed</th>
+            <th>completed</th>
+            <th>Vendor Name</th>
+            <th>Source Name</th>
+            <th>Document Name</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of inProgressList; let pindex = index;">
+            <td>{{pindex + 1}}</td>
+            <td>{{item.checkUniqueId}}</td>
+            <td>{{item.checkCode}}</td>
+            <td>{{item.checkName}}</td>
+            <td>{{item.checkStatus}}</td>
+            <td>{{item.checkRemarks}}</td>
+            <td>{{item.modeOfVerificationRequired}}</td>
+            <td>{{item.modeOfVerificationPerformed}}</td>
+            <td>{{item.completedDateTime}}</td>
+            <td>{{item.vendorName}}</td>
+            <td>{{item.sourceName}}</td>
+            <td>{{item.doucmentName}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<div class="col-md-12">
+  <div class="card">
+    <div class="card-header">
+      <h4>
+        <font size="3" color="orange" class="card-title">QC Pending</font>
+        <button [disabled]="finalReportDisabled === 'FINALREPORT'" type="button"
+                (click)="linkAdminApproval(candidateCode)" class="btn btn-sm btn-success float-right">
+          Pending Approval
+        </button>
+      </h4>
+
+      <div class="table-responsive">
+        <table class="table table-bordered mt-2">
+          <thead class="thead-light">
+          <tr>
+            <th>Sno</th>
+            <th>Check Unique Id</th>
+            <th>Check Code</th>
+            <th>Check Name</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Verification Required</th>
+            <th>Verification Performed</th>
+            <th>completed</th>
+            <th>Vendor Name</th>
+            <th>Source Name</th>
+            <th>Document Name</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of qcPendingList; let qindex = index;">
+            <td>
+              {{qindex + 1}}
+            </td>
+            <td>{{item.checkCode}}</td>
+            <td>{{item.checkUniqueId}}</td>
+            <td>{{item.checkName}}</td>
+            <td>{{item.checkStatus}}</td>
+            <td>{{item.checkRemarks}}</td>
+            <td>{{item.modeOfVerificationRequired}}</td>
+            <td>{{item.modeOfVerificationPerformed}}</td>
+            <td>{{item.completedDateTime}}</td>
+            <td>{{item.vendorName}}</td>
+            <td>{{item.sourceName}}</td>
+            <td>{{item.doucmentName}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PassPort =================-->
+<ng-template #tempmodal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Status</h4>
+    <button type="button" class="close" aria-label="Close" (click)="closeStatusModal(modal)">
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+  <div class="modal-body">
+
+    <form *ngIf="IDItems" [formGroup]="formpassport" (ngSubmit)="submitpassport(formpassport)">
+      <input type="hidden">
+      <h6 class="modal-title"></h6>
+      <br/>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label for="" class="required">Upload Document</label>
+            <select class="form-control form-control-sm" #b
+                    (change)=getDocuementName(b.value) formControlName="passportUrl">
+              <option [value]="null">--Select--</option>
+              <option *ngFor="let item of documentData"
+                      [value]="item.pathkey">{{ item.documentName}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 text-center mt-3 pb-3">
+          <button type="submit" class="btn btn-primary btn-sm" [disabled]="isButtonDisabled">
+            Submit
+          </button>
+          <button type="button" class="btn btn-danger btn-sm">Close</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</ng-template>
+
+
+
+
+
+
+
+
