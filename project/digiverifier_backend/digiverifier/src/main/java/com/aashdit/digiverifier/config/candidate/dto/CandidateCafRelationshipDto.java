@@ -5,13 +5,13 @@ import lombok.Data;
 @Data
 public class CandidateCafRelationshipDto {
 
-	String candidateCode;
-	
-	String candidateRelationship;
-	
-	String candidateRelationshipEmail;
-	
-	String rentType;
-	
-	String uploadFile;
+    String candidateCode;
+
+    String candidateRelationship;
+
+    String candidateRelationshipEmail;
+
+    String rentType;
+
+    String uploadFile;
 }

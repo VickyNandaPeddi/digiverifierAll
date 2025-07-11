@@ -18,52 +18,52 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class CandidateInvitationExpired {
-	
-	@Autowired
-	private CandidateService candidateService;
-	
-	@Autowired
-	private UserService userService;
-	
-	@Scheduled(cron="${com.dgv.candidateSchedularTime}")
-	public void expireInvitationForCandidate() {
-		List<String> collect=null;
-		try {		
-			log.info("candidate invitation expired Schedular Started Successfully At " + new Date());	
-			List<CandidateStatus> candidateStatusList=candidateService.expireInvitationForCandidate();
-			if(!candidateStatusList.isEmpty()) {
-				collect = candidateStatusList.stream().map(c -> c.getCandidate().getCandidateCode()).collect(Collectors.toList());
-				log.info("Invitation expired for Candidates" + collect);	
-			}
-		} catch (Exception e) {
-		 	log.error("Exception occured in expireInvitationForCandidate method in CandidateInvitationExpired-->",e);
-		}
-	
-	}
-	
-	@Scheduled(cron="${com.dgv.candidateSchedularTime}")
-	public void processDeclined() {
-		List<String> collect=null;
-		try {		
-			log.info("candidate process declined Started Successfully At " + new Date());	
-			List<CandidateStatus> candidateStatusList=candidateService.processDeclined();
-			if(!candidateStatusList.isEmpty()) {
-				collect = candidateStatusList.stream().map(c -> c.getCandidate().getCandidateCode()).collect(Collectors.toList());
-				log.info("Invitation expired for Candidates" + collect);	
-			}
-		} catch (Exception e) {
-		 	log.error("Exception occured in processDeclined method in CandidateInvitationExpired-->",e);
-		}
-	
-	}
-	
-	@Scheduled(cron="${com.dgv.logoutSchedularTime}")
-	public void logoutUser() {
-		try {		
-			userService.logoutUserAfter5Mins();
-		} catch (Exception e) {
-		 	log.error("Exception occured in logoutUser method in CandidateInvitationExpired-->",e);
-		}
-	
-	}
+
+    @Autowired
+    private CandidateService candidateService;
+
+    @Autowired
+    private UserService userService;
+
+    @Scheduled(cron = "${com.dgv.candidateSchedularTime}")
+    public void expireInvitationForCandidate() {
+        List<String> collect = null;
+        try {
+            log.info("candidate invitation expired Schedular Started Successfully At " + new Date());
+            List<CandidateStatus> candidateStatusList = candidateService.expireInvitationForCandidate();
+            if (!candidateStatusList.isEmpty()) {
+                collect = candidateStatusList.stream().map(c -> c.getCandidate().getCandidateCode()).collect(Collectors.toList());
+                log.info("Invitation expired for Candidates" + collect);
+            }
+        } catch (Exception e) {
+            log.error("Exception occured in expireInvitationForCandidate method in CandidateInvitationExpired-->", e);
+        }
+
+    }
+
+    @Scheduled(cron = "${com.dgv.candidateSchedularTime}")
+    public void processDeclined() {
+        List<String> collect = null;
+        try {
+            log.info("candidate process declined Started Successfully At " + new Date());
+            List<CandidateStatus> candidateStatusList = candidateService.processDeclined();
+            if (!candidateStatusList.isEmpty()) {
+                collect = candidateStatusList.stream().map(c -> c.getCandidate().getCandidateCode()).collect(Collectors.toList());
+                log.info("Invitation expired for Candidates" + collect);
+            }
+        } catch (Exception e) {
+            log.error("Exception occured in processDeclined method in CandidateInvitationExpired-->", e);
+        }
+
+    }
+
+    @Scheduled(cron = "${com.dgv.logoutSchedularTime}")
+    public void logoutUser() {
+        try {
+            userService.logoutUserAfter5Mins();
+        } catch (Exception e) {
+            log.error("Exception occured in logoutUser method in CandidateInvitationExpired-->", e);
+        }
+
+    }
 }

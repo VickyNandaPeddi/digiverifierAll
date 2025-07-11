@@ -1,3 +1,4 @@
+package com.aashdit.digiverifier.utils;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
@@ -24,10 +25,8 @@ public class AesUtil {
     public AesUtil(int keySize, int iterationCount) {
         this.keySize = keySize;
         this.iterationCount = iterationCount;
-//        String aesinstance = "AES/CBC/PKCS5Padding";
-        String aesinstance = "AES/GCM/NoPadding";
         try {
-            cipher = Cipher.getInstance(aesinstance);
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             throw fail(e);
         }
@@ -55,14 +54,27 @@ public class AesUtil {
         }
     }
 
+    private final SecureRandom random = new SecureRandom();
+
     private byte[] doFinal(int encryptMode, SecretKey key, String iv, byte[] bytes) {
+
         try {
-            cipher.init(encryptMode, key, new IvParameterSpec(hex(iv)));
+            byte[] bytesIV = new byte[16];
+
+            random.nextBytes(bytesIV);
+
+            cipher.init(encryptMode, key, new IvParameterSpec(bytesIV));
+
             return cipher.doFinal(bytes);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException |
-                 BadPaddingException e) {
+
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException
+
+                 | BadPaddingException e) {
+
             return null;
+
         }
+
     }
 
     private SecretKey generateKey(String salt, String passphrase) {
@@ -123,11 +135,10 @@ public class AesUtil {
     public static String encrypt(final String strToEncrypt, final String secret) {
         try {
             setKey(secret);
-//            String aesinstance = "AES/CBC/PKCS5Padding";
-            String aesinstance = "AES/GCM/NoPadding";
-            Cipher cipher = Cipher.getInstance(aesinstance);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            return java.util.Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+            return java.util.Base64.getEncoder()
+                    .encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
         } catch (Exception e) {
             System.out.println("Error while encrypting: " + e.toString());
         }
@@ -137,11 +148,10 @@ public class AesUtil {
     public static String decrypt(final String strToDecrypt, final String secret) {
         try {
             setKey(secret);
-            String aesinstance = "AES/GCM/NoPadding";
-//            String aesinstance = "AES/CBC/PKCS5Padding";
-            Cipher cipher = Cipher.getInstance(aesinstance);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            return new String(cipher.doFinal(java.util.Base64.getDecoder().decode(strToDecrypt)));
+            return new String(cipher.doFinal(java.util.Base64.getDecoder()
+                    .decode(strToDecrypt)));
         } catch (Exception e) {
             System.out.println("Error while decrypting: " + e.toString());
         }

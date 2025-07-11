@@ -21,19 +21,19 @@ import com.aashdit.digiverifier.login.model.LoggedInUser;
 
 
 @Component(value = "userDetailsService")
-public class UserDetailsServiceImpl implements UserDetailsService{
-	
-	private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
+public class UserDetailsServiceImpl implements UserDetailsService {
 
-	@Autowired
-	private UserRepository userRepository;
+    private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
 
-	@Override
-	@Transactional(readOnly=true)
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    @Autowired
+    private UserRepository userRepository;
 
-		User user = userRepository.findByUserName(username);
-		if (user != null) {
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        User user = userRepository.findByUserName(username);
+        if (user != null) {
 			/*
 			  if (user.getAllowMultipleSession() == false) { if (user.getIsLoggedIn() ==
 			  true) { logger.
@@ -48,20 +48,20 @@ public class UserDetailsServiceImpl implements UserDetailsService{
 				throw new SessionAuthenticationException("Your Email has not been verified. Please verify your email");
 			}
 			*/
-		} else {
-			logger.debug("No user found with user name -> " + username);
-			throw new SessionAuthenticationException("Please check your credentials. Either Username or Password is wrong");
-		}
+        } else {
+            logger.debug("No user found with user name -> " + username);
+            throw new SessionAuthenticationException("Please check your credentials. Either Username or Password is wrong");
+        }
 
-		List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-		grantedAuthorities.add(new SimpleGrantedAuthority(user.getRole().getRoleCode()));
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        grantedAuthorities.add(new SimpleGrantedAuthority(user.getRole().getRoleCode()));
 
-		LoggedInUser liu = new LoggedInUser(username, user.getPassword(), true, true,
-				true, true, grantedAuthorities, user.getRole(), user);
-		
-		return liu;
+        LoggedInUser liu = new LoggedInUser(username, user.getPassword(), true, true,
+                true, true, grantedAuthorities, user.getRole(), user);
 
-	}
-	
-	
+        return liu;
+
+    }
+
+
 }

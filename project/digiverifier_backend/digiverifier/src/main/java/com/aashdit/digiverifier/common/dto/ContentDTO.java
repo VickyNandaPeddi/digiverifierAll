@@ -12,29 +12,29 @@ import java.util.Date;
 @Data
 public class ContentDTO {
 
-	private Long contentId;
-	
-	private Long candidateId;
-	
-	private String bucketName;
-	
-	private String path;
-	
-	private FileType fileType;
-	
-	private ContentType contentType;
+    private Long contentId;
 
-	private ContentCategory contentCategory;
-	
-	private ContentSubCategory contentSubCategory;
-	
-	private Date createdOn;
-	
-	private Date lastUpdatedOn;
-	
-	private File file;
-	
-	private String fileUrl;
-	
-	private String candidateCode;
+    private Long candidateId;
+
+    private String bucketName;
+
+    private String path;
+
+    private FileType fileType;
+
+    private ContentType contentType;
+
+    private ContentCategory contentCategory;
+
+    private ContentSubCategory contentSubCategory;
+
+    private Date createdOn;
+
+    private Date lastUpdatedOn;
+
+    private File file;
+
+    private String fileUrl;
+
+    private String candidateCode;
 }

@@ -4,41 +4,41 @@ import lombok.Data;
 
 @Data
 public class ApprovalStatusRemarkDto {
-	public Long id;
+    public Long id;
 
-	private Long qualificationId;
+    private Long qualificationId;
 
-	private String schoolOrCollegeName;
+    private String schoolOrCollegeName;
 
-	private String boardOrUniversityName;
+    private String boardOrUniversityName;
 
-	private String yearOfPassing;
+    private String yearOfPassing;
 
-	private String percentage;
+    private String percentage;
 
-	private String CompanyName;
+    private String CompanyName;
 
-	private String DateofJoining;
+    private String DateofJoining;
 
-	private String LastWorkingDay;
+    private String LastWorkingDay;
 
-	private Long colorId;
-	
-	private Long remarkId;
+    private Long colorId;
 
-	private String candidateCode;
+    private Long remarkId;
 
-	private String candidateEmployerName;
+    private String candidateCode;
+
+    private String candidateEmployerName;
 
     private String inputDateOfJoining;
 
     private String inputDateOfExit;
 
-	private Boolean isPresentAddress;
+    private Boolean isPresentAddress;
 
-	private Boolean isPermanentAddress;
+    private Boolean isPermanentAddress;
 
-	private Boolean isAssetDeliveryAddress;
+    private Boolean isAssetDeliveryAddress;
 
-	private Long candidateCafAddressId;
+    private Long candidateCafAddressId;
 }

@@ -9,8 +9,8 @@ import lombok.Data;
 
 @Data
 public class RoleHeadPermissionListDto {
-	
-	private RolePermissionHead rolePermissionHead;
-	private List<RolePermissionMaster> rolePermissionMaster;
+
+    private RolePermissionHead rolePermissionHead;
+    private List<RolePermissionMaster> rolePermissionMaster;
 
 }

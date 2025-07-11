@@ -7,11 +7,11 @@ import java.util.List;
 
 @Data
 public class ITRDataDto {
-	
-	private String candidateName;
-	
-	private String panNumber;
-	
-	private List<ITRData> itrDataList;
-	
+
+    private String candidateName;
+
+    private String panNumber;
+
+    private List<ITRData> itrDataList;
+
 }

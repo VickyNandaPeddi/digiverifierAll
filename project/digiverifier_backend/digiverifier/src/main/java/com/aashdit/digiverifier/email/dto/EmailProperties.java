@@ -7,35 +7,35 @@ import org.springframework.context.annotation.PropertySource;
 import lombok.Data;
 
 @PropertySource("classpath:configuration.properties")
-@ConfigurationProperties(prefix="com.digiverifier.email")
+@ConfigurationProperties(prefix = "com.digiverifier.email")
 @Configuration
 @Data
 public class EmailProperties {
-	
-	private String digiverifierForwardUrllink;
-	
-	private String digiverifierEmailSenderId;
-	
-	private String digiverifierEmailTitle;
-	
-	private String smtpPort;
 
-	private String sesHost;
+    private String digiverifierForwardUrllink;
 
-	private String sesUsername;
+    private String digiverifierEmailSenderId;
 
-	private String sesPassword;
+    private String digiverifierEmailTitle;
 
-	private String digiverifierSenderNickName;
+    private String smtpPort;
 
-	private String mailTransportProtocol;
+    private String sesHost;
 
-	private String mailStarttlsEnabled;
+    private String sesUsername;
 
-	private String mailSmtpAuth;
+    private String sesPassword;
 
-	private String mailContentType;
-	
-	private String digiverifierRelationshipUrllink;
+    private String digiverifierSenderNickName;
+
+    private String mailTransportProtocol;
+
+    private String mailStarttlsEnabled;
+
+    private String mailSmtpAuth;
+
+    private String mailContentType;
+
+    private String digiverifierRelationshipUrllink;
 
 }

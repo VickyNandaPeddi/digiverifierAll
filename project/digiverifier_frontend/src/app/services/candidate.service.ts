@@ -1,4 +1,4 @@
-import {HttpClient, HttpRequest, HttpHeaders, HttpEvent} from '@angular/common/http';
+import {HttpClient, HttpRequest, HttpHeaders, HttpEvent, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {environment} from 'src/environments/environment';
@@ -11,16 +11,27 @@ export class CandidateService {
   constructor(private http: HttpClient) {
   }
 
-  generateReportWithReportType(candidateCode: any, reportType: any, updated: any) {
-    return this.http.get(`${environment.apiUrl}/api/vendorCheck/generateJsonByCandidateId/${candidateCode}/${reportType}/${updated}`);
+  generateReportWithReportType(candidateCode: any, reportType: any, updated: any, reportDeliveryDate: any) {
+    return this.http.get(
+        `${environment.apiUrl}/api/vendorCheck/generateJsonByCandidateId/${candidateCode}/${reportType}/${updated}?reportDeliveryDate=${reportDeliveryDate}`
+    );
   }
+
+  uploadBgvPendingReports(candidateCode: any, reportType: any, updated: any) {
+    return this.http.get(`${environment.apiUrl}/api/vendorCheck/uploadBgvPendingReports/${candidateCode}/${reportType}/${updated}`);
+  }
+
+triggerCheckStatusAtAgentByCheckUniqueId(checkUniqueIds: string[]): Observable<any> {
+  return this.http.post<any>(`${environment.apiUrl}/api/vendorCheck/updateBgvCheckStatusRowwiseByAgent`, { checkUniqueIds });
+}
+
 
   generateDataForExcel() {
     return this.http.get(`${environment.apiUrl}/api/vendorCheck/generateConventionalUtilizationReport`);
   }
 
-  generateReferenceDataForVendor(candidateId: any, checkId: any) {
-    return this.http.get(`${environment.apiUrl}/api/vendorCheck/generateReferenceDataForVendor/${candidateId}/${checkId}`);
+  generateReferenceDataForVendor(candidateId: any, checkId: any,checkName:any) {
+    return this.http.get(`${environment.apiUrl}/api/vendorCheck/generateReferenceDataForVendor/${candidateId}/${checkId}`,{ params: { checkName } });
   }
 
   conventionalCandidateApplicationFormApproved(candidateCode: any) {
@@ -247,5 +258,45 @@ export class CandidateService {
     return this.http.put(`${environment.apiUrl}/api/candidate/AddCommentsReports`, data);
   }
 
+  discrepancyReport(checkId:any,candidateRequestId:any){
+    return this.http.get(`${environment.apiUrl}/api/vendorCheck/generateDiscrepancyReport/${checkId}/${candidateRequestId}`);
+  }
+  uploadUan(data: any): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/api/vendorCheck/uploadUan`, data);
+  }
+
+  // Method to get uploaded UAN data
+  getAgentUploadedData(requestId: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/api/vendorCheck/getAgentUploaded`, { params: { requestId } });
+  }
+
+  getSourceBySource(sourceName: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/api/vendorCheck/getSourceName`, { params: { sourceName } });
+  }
+
+
+  deleteDatabase(requestIds: string[]): Observable<any> {
+    const body = { requestIds };  // Request body in the expected format
+    return this.http.post<any>(`${environment.apiUrl}/api/vendorCheck/deletedatabase`, body);
+  }
+
+  updateCheckStatus(
+    checkUniqueId: string,
+    selectedCheckstatus: string
+  ): Observable<any> {
+    return this.http.get<any>(
+      `${environment.apiUrl}/api/vendorCheck/updateCheckStatus`,
+      { params: { checkUniqueId, selectedCheckstatus } }
+    );
+  }
+  refetchCandidateData(requestId: any, checkFetchFlag: any) {
+    const params = new HttpParams()
+      .set('requestId', requestId)
+      .set('checkFetchFlag', checkFetchFlag);
+    return this.http.get(
+      `${environment.apiUrl}/api/vendorCheck/refetchCandidateData`,
+      { params }
+    );
+  }
 
 }

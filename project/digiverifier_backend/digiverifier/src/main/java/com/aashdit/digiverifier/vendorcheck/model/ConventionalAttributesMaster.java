@@ -3,21 +3,12 @@
  */
 package com.aashdit.digiverifier.vendorcheck.model;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.persistence.*;
-
-import com.aashdit.digiverifier.config.superadmin.model.Source;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * @author ${ashwani}
@@ -41,5 +32,6 @@ public class ConventionalAttributesMaster implements Serializable {
     @Column(name = "source_ids")
     private ArrayList<Long> sourceIds;
 
-
+    @Column(name = "global_check_type")
+    private String globalCheckType;
 }

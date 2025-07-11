@@ -1,11 +1,9 @@
 package com.aashdit.digiverifier.config.candidate.model;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -23,7 +21,7 @@ public class ConventionalCafAddress implements Serializable {
     private Long Id;
 
     @Column(name = "conventional_candidateid")
-    private Long conventionalCandidateId;
+    private String conventionalCandidateId;
 
     @Column(name = "conventional_requestid")
     private Long conventionalRequestId;
@@ -49,7 +47,7 @@ public class ConventionalCafAddress implements Serializable {
     @Column(name = "contact_info")
     private String contactInfo;
 
-    @Column(name = "insufficiency_remarks",length = 3000)
+    @Column(name = "insufficiency_remarks", length = 3000)
     private String insufficiencyRemarks;
 
 }

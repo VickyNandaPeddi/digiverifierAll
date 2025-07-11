@@ -38,6 +38,9 @@ public class FetchVendorConventionalCandidateDto {
 
     private String sourceName;
 
+
+    private String candidateStatus;
+
     public FetchVendorConventionalCandidateDto(String requestId, String candidateID, String psno, String vendorId, Date createdOn) {
         this.requestId = requestId;
         this.candidateID = candidateID;

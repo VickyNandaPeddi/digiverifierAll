@@ -1,9 +1,11 @@
 package com.aashdit.digiverifier.security;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+
 
 public class XSSRequestWrapper extends HttpServletRequestWrapper {
 

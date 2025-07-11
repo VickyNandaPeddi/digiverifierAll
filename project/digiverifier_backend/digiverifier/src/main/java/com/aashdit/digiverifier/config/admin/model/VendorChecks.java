@@ -14,25 +14,17 @@ package com.aashdit.digiverifier.config.admin.model;
 // import javax.validation.constraints.NotNull;
 // import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Date;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
-import com.aashdit.digiverifier.config.admin.model.User;
-import com.aashdit.digiverifier.config.superadmin.model.Source;
 import com.aashdit.digiverifier.config.candidate.model.Candidate;
-// import com.aashdit.digiverifier.config.admin.model.VendorMasterNew;
-import lombok.Data;
-import org.hibernate.annotations.Type;
+import com.aashdit.digiverifier.config.superadmin.model.Source;
 import com.aashdit.digiverifier.config.superadmin.model.VendorCheckStatusMaster;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.io.Serializable;
+import java.sql.Types;
+import java.util.Date;
 
 @Data
 @Entity
@@ -51,6 +43,7 @@ public class VendorChecks implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "candidate_id")
+    @NotNull
     private Candidate candidate;
 
     @Column(name = "vendor_id")
@@ -70,7 +63,7 @@ public class VendorChecks implements Serializable {
     private Boolean expireson;
 
 
-    @Type(type = "org.hibernate.type.BinaryType")
+    @JdbcTypeCode(Types.LONGVARBINARY)
     @Column(name = "agent_Uploaded_Document", columnDefinition = "LONGBLOB")
     private byte[] agentUploadedDocument;
 
@@ -116,5 +109,15 @@ public class VendorChecks implements Serializable {
 
     @Column(name = "pathkey")
     private String pathKey;
+
+
+    @Column(name = "licheckid", unique = true)
+    @NotNull
+    private Long licheckId;
+
+    @Column(name = "last_updated_on")
+    private Date lastUpdatedOn;
+    @Column(name = "last_updated_by")
+    private String lastUpdatedBy;
 
 }

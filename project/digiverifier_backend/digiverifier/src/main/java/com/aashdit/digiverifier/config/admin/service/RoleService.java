@@ -9,18 +9,18 @@ import com.aashdit.digiverifier.config.admin.model.Role;
 
 public interface RoleService {
 
-	ServiceOutcome<List<Role>> getAllRole();
+    ServiceOutcome<List<Role>> getAllRole();
 
-	ServiceOutcome<List<RoleHeadPermissionListDto>> getAllRolePermission();
+    ServiceOutcome<List<RoleHeadPermissionListDto>> getAllRolePermission();
 
-	ServiceOutcome<RolePermissionDTO> rolePermission(RolePermissionDTO rolePermissionDTO);
+    ServiceOutcome<RolePermissionDTO> rolePermission(RolePermissionDTO rolePermissionDTO);
 
-	ServiceOutcome<RolePermissionDTO> getAllUserRolePerMissionMap(Long roleId);
+    ServiceOutcome<RolePermissionDTO> getAllUserRolePerMissionMap(Long roleId);
 
-	ServiceOutcome<Role> saveNUpdateRole(Role role);
+    ServiceOutcome<Role> saveNUpdateRole(Role role);
 
-	ServiceOutcome<List<Role>> getRoleDropDownByUser();
+    ServiceOutcome<List<Role>> getRoleDropDownByUser();
 
-	ServiceOutcome<List<String>> getAllRolePerMissionCodeByRoleCode(String roleCode);
+    ServiceOutcome<List<String>> getAllRolePerMissionCodeByRoleCode(String roleCode);
 
 }

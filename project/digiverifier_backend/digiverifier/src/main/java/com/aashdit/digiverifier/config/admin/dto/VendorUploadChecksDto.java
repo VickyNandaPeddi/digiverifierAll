@@ -9,6 +9,7 @@ import java.util.ArrayList;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class VendorUploadChecksDto<t> {
 
     private String userFirstName;
@@ -19,6 +20,11 @@ public class VendorUploadChecksDto<t> {
     private String colorHexCode;
     private Long colorId;
     private String checkUniqueId;
+    private String triggeredResponse;
+    private String checkName;
+    private ArrayList<VendorAttributeDto> vendorAttirbuteValue;
+    private String checkStatus;
+
 
     public VendorUploadChecksDto(String userFirstName, Long vendorChecks, byte[] document, String documentname, String agentColor, String colorHexCode, Long colorId) {
         this.userFirstName = userFirstName;
@@ -30,7 +36,7 @@ public class VendorUploadChecksDto<t> {
         this.colorId = colorId;
     }
 
-    public VendorUploadChecksDto(String userFirstName, Long vendorChecks, byte[] document, String documentname, String agentColor, String colorHexCode, Long colorId, String checkUniqueId) {
+    public VendorUploadChecksDto(String userFirstName, Long vendorChecks, byte[] document, String documentname, String agentColor, String colorHexCode, Long colorId, ArrayList<VendorAttributeDto> vendorAttirbuteValue) {
         this.userFirstName = userFirstName;
         VendorChecks = vendorChecks;
         this.document = document;
@@ -38,10 +44,19 @@ public class VendorUploadChecksDto<t> {
         AgentColor = agentColor;
         this.colorHexCode = colorHexCode;
         this.colorId = colorId;
-        this.checkUniqueId = checkUniqueId;
+        this.vendorAttirbuteValue = vendorAttirbuteValue;
     }
 
-    private ArrayList<VendorAttributeDto> vendorAttirbuteValue;
-
+    public VendorUploadChecksDto(String userFirstName, Long vendorChecks, byte[] document, String documentname, String agentColor, String colorHexCode, Long colorId, String checkStatus, String checkUniqueId) {
+        this.userFirstName = userFirstName;
+        VendorChecks = vendorChecks;
+        this.document = document;
+        this.documentname = documentname;
+        AgentColor = agentColor;
+        this.colorHexCode = colorHexCode;
+        this.colorId = colorId;
+        this.checkStatus = checkStatus;
+        this.checkUniqueId = checkUniqueId;
+    }
 
 }

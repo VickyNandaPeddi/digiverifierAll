@@ -3,14 +3,11 @@ package com.aashdit.digiverifier.vendorcheck.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import java.util.Date;
-
 @Getter
 @Setter
 public class ConventionalEducationDto {
 
-    private Long Id;
+//    private Long Id;
 
     private Long conventionalCandidateId;
 
@@ -19,9 +16,9 @@ public class ConventionalEducationDto {
     private String degreeType;
 
 
-    private Date startDate;
+    private String startDate;
 
-    private Date endDate;
+    private String endDate;
 
     private String insufficiecyRemarks;
 
@@ -32,5 +29,10 @@ public class ConventionalEducationDto {
     private String schoolOrCollegeName;
 
     private String boardOrUniversityName;
+
+    private String isSuspect;
+
+    private String reasonForSuspect;
+
 
 }

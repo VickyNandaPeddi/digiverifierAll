@@ -6,14 +6,14 @@ import com.aashdit.digiverifier.config.superadmin.dto.SuperAdminDashboardDto;
 
 public interface SuperAdminDashboardService {
 
-	ServiceOutcome<SuperAdminDashboardDto> getPendingDetails(SuperAdminDashboardDto superAdminDashboardDto);
+    ServiceOutcome<SuperAdminDashboardDto> getPendingDetails(SuperAdminDashboardDto superAdminDashboardDto);
 
-	ServiceOutcome<SuperAdminDashboardDto> getActivityDetails(SuperAdminDashboardDto superAdminDashboardDto);
+    ServiceOutcome<SuperAdminDashboardDto> getActivityDetails(SuperAdminDashboardDto superAdminDashboardDto);
 
-	ServiceOutcome<SuperAdminDashboardDto>  getUtilizationRatePerItem(SuperAdminDashboardDto superAdminDashboardDto);
+    ServiceOutcome<SuperAdminDashboardDto> getUtilizationRatePerItem(SuperAdminDashboardDto superAdminDashboardDto);
 
-	ServiceOutcome<SuperAdminDashboardDto>  getUtilizationRatePerReport(SuperAdminDashboardDto superAdminDashboardDto);
+    ServiceOutcome<SuperAdminDashboardDto> getUtilizationRatePerReport(SuperAdminDashboardDto superAdminDashboardDto);
 
-	ServiceOutcome<DashboardDto> getCompanyCountByActivity(DashboardDto dashboardDto);
+    ServiceOutcome<DashboardDto> getCompanyCountByActivity(DashboardDto dashboardDto);
 
 }

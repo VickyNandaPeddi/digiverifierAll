@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en-us" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>DigiVerifier Pdf</title>
+    <meta charset="UTF-8"/>
+     <link th:href="${cssPath + '/common.css'}" rel="stylesheet"/>
+     <link th:href="@{https://fonts.googleapis.com/css?family=Calibri:400,700,400,700&display=swap}" rel="stylesheet"/>
+<style>
+	    .table-st {
+            clear: both;
+            width: 100%;
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+        .table-st tr {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+        .table-st tr td {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+            padding: 10px;
+        }
+        .table-st tr td span {
+            margin-left: 5px;
+        }
+        .table-container {
+            page-break-inside: avoid; /* Prevent table from splitting across pages */
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-left {
+            text-align: left;
+        }
+        .blue-bg {
+            background-color: #808080;
+        }
+        .grey-bg {
+            background-color: rgba(49, 119, 235, 0.8);
+        }
+        .black-heading {
+            color: black;
+            font-size: 15px !important;
+            font-weight: 700;
+            font-family: 'Calibri';
+        }
+        .white-heading {
+			color: #FFF;
+            font-family:Calibri, sans-serif; 
+            font-style: normal; 
+            font-weight: bold; 
+            font-size: 15pt;
+        }
+        .black-text {
+            color: black; 
+            font-family:Calibri, sans-serif; 
+            font-style: normal; 
+            font-weight: bold; 
+            font-size: 13pt;
+        }
+        .grey-text {
+            color: black; 
+            font-family:Calibri, sans-serif; 
+            font-style: normal; 
+            font-weight: normal; 
+            font-size: 12pt;
+        }
+        .white-text {
+            color: #fff;
+            font-weight: 700 !important;;
+            font-size: 13px;
+            font-family: 'Calibri';
+        }
+        .line-break {
+            display: block;
+            height: 15px;
+        }
+        .green-status {
+            margin: 0px;
+            color: #008000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .amber-status {
+            margin: 0px;
+            color: #ffA500;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .red-status {
+            margin: 0px;
+            color: #ff0000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .invalid-status {
+            margin: 0px;
+            color: #000000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .black-box {
+            border: 1px solid black;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .color-container {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .box {
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            background-color: transparent; /* Set the desired background color */
+            display: inline-block;
+        }
+        .red {
+            background-color: red;
+        }
+        .green {
+            background-color: green;
+        }
+        .amber {
+            background-color: #ffA500;;
+        }
+        .yellow {
+            background-color: yellow;
+        }	
+</style>
+</head>
+<body style="background-color:#fff;padding:0px;margin:0px;position:relative;font-family: 'Calibri', sans-serif;color:#666666;">
+	<section class="wrapper" style="width:100%;margin:0 auto;height:80%;">
+		<table class="table-st">
+			<tr>
+				<td class="grey-bg text-center" colspan="2">
+					<span style="color: #FFF; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 15pt;">
+						Discrepancy Report
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Client Name 
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						LTIMINDTREE LIMITED
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Applicant Name 
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.name}"></a>
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Candidate Id 
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.candidateId}"></a>
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Request Id 
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.requestId}"></a>
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Case Initiation Date
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${#dates.format(root.caseInitiationDate, 'dd-MMM-yyyy')}"></a>
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Report Date 
+					</span>
+				</td>
+				<td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'INTERIM')}">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:if="${root.interimReportDate != null}" th:text="${#dates.format(root.interimReportDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.interimReportDate == null}" th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+					</span>
+				</td>
+				<td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'FINAL')}">
+                    <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                        <a th:if="${root.finalReportDate == null}" th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.finalReportDate != null}" th:text="${#dates.format(root.finalReportDate, 'dd-MMM-yyyy')}"></a>
+                    </span>
+                </td>
+                <td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'DISCREPANCY')}">
+                    <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                        <a th:if="${root.discrepancyReportDate == null}" th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.discrepancyReportDate != null}" th:text="${#dates.format(root.discrepancyReportDate, 'dd-MMM-yyyy')}"></a>
+                    </span>
+                </td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Location
+					</span>
+				</td>
+				<td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.address}"></a>
+					</span>
+				</td>
+			</tr>
+			<tr class="text-left">
+				<td style="width: 30%;">
+					<span  style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Report Status
+					</span>
+				</td>
+				<td style="width: 80%; background-color: rgb(226, 29, 68,0.6);">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="RED"></a>
+					</span>
+				</td>
+			</tr>
+		</table>
+		<span class="line-break"></span>
+        <span class="line-break"></span>
+     <!-- <div class="color-container text-center"> -->
+         <span class="box green"></span>
+        <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Green (Positive)</span>
+        <span class="box amber"></span>
+        <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Amber (Unable to Verify)</span>
+        <span class="box yellow"></span>
+        <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Yellow (Insufficiency)</span>
+        <span class="box red"></span>
+        <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Red (Major/Minor Discrepancy)</span> 
+    <!-- </div> -->
+      <div style="page-break-after:always;"></div>
+      <table class="table-st employer-name-verification table-container" border="0"
+           style="page-break-inside: avoid; border:none">
+           <tr th:style="'border: none'">
+			   <td colspan="12" th:style="'border: none'" class="text-center">
+                <div style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+					<b>Executive Summary </b>
+                </div>
+               </td>
+           </tr>
+           <tr class="text-center">
+			   <!--<td class="grey-bg" style="width:7%; padding: 5px;">
+				   <span class="white-heading">S.No</span>
+               </td>-->
+               <td class="grey-bg" style="width:35%; padding: 5px;">
+				   <span class="white-heading">Checks</span>
+               </td>
+               <td class="grey-bg" style="width:25%; padding: 5px;">
+				   <span class="white-heading">Check Status</span>
+               </td>
+               <td class="grey-bg" style="width:35%; padding: 5px;">
+				   <span class="white-heading">Remarks</span>
+               </td>
+               <td class="grey-bg" style="width:35%; padding: 5px;">
+				   <span class="white-heading">Details</span>
+               </td>
+           </tr>
+           <tr th:each="licheck,stat: ${root.liChecksDetails}">
+			   <!--<td class="black-text text-center">
+				   <span th:text="${stat.index + 1}"></span>
+			   </td>-->
+			   <td class="black-text text-left">
+				   <span class="black-text" th:text="${#strings.containsIgnoreCase(licheck.checkName, 'EDUCATION') ?
+                  #strings.substring(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                  licheck.checkName}"></span>
+			   </td>
+			   <td class="black-text text-center">
+				   <span class="black-text" th:text="${licheck.CheckStatus.equalsIgnoreCase('CLEAR') ? 'GREEN'
+                                                                : licheck.CheckStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'AMBER'
+                                                                : licheck.CheckStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'YELLOW'
+                                                                : (licheck.CheckStatus.equalsIgnoreCase('MINORDISCREPANCY') or licheck.checkStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'RED'
+                                                                : licheck.CheckStatus}"></span>
+			   </td>
+			   <td class="black-text text-center">
+				   <span class="black-text" th:text="${licheck.CheckRemarks}"></span>
+			   </td>
+			   <td class="black-text text-center">
+				   <span class="black-text" th:text="${licheck.disableStatus == null or licheck.disableStatus.trim().isEmpty() ? '-' : licheck.disableStatus}"></span>
+			   </td>
+		   </tr>		  
+	  </table>
+	  <div style="page-break-after:always;"></div>
+	      <!--  EDUCATION checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'EDUCATION')}">
+                <div class="table-container" style="page-break-after:always;"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                  #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                  vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                                      class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+									<td  class="black-text text-left" style="width: 30%; padding: 5px;">
+										Check Status
+									</td>
+									<td class="text-left" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>	
+									</td>
+								</tr>
+                                <tr th:each="vendoratts : ${vendorsourcename.vendorAttirbuteValue}"
+                                    th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;" th:if="${splitValue.size() &gt;= 1}"
+                              th:text="${splitValue[0]}"></span>
+                                    </td>
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="grey-text text-left" style="font-size: 18px;" th:if="${splitValue.size() &gt;= 2}"
+                              th:text="${splitValue[1]}"></span>
+                                    </td>
+
+                                </tr>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'EDUCATION')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+                                                    <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry                                                    .key))}">
+                                                        <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                                <th:block th:each="value : ${entry.value}">
+                                                                    <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                                                                         style="width: 600px; height: auto;">
+                                                                </th:block>
+                                                        </span>
+                                                    </span>
+                                                                                <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename                                                                                                         .sourceName), #strings.trim(entry.key))}">
+                                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- EDUCATION   checks with proofs ends-->
+    <!--  EMPLOYMENT checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'EMPLOYMENT')}">
+                <div class="table-container" style="page-break-after:always;"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                              #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                              vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading" colspan="2"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td class="text-left" colspan="2" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>
+                                    </td>
+                                </tr>
+                                <th:block>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Employers Name')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Employers Name
+                                            </td>
+                                            <td class="black-text text-left" colspan="2" style="padding: 3px;"
+                                                th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Employers Address')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Employers
+                                                Address
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 5px;"
+                                                th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Name of Respondent & Contact No')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Name of
+                                                Respondent
+                                                & Contact No
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;"
+                                                th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Designation of Respondent')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Designation of
+                                                Respondent
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;"
+                                                th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <tr>
+                                        <td class="black-text text-left" style="padding: 3px;">Comments of the
+                                            Respondent in terms of
+                                        </td>
+                                        <td class="black-text text-left" style="padding: 3px;">Candidate's Input</td>
+                                        <td class="black-text text-left" style="padding: 3px;">HR Feedback</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="black-text text-left" style="padding: 3px;">a) Period of
+                                            Employment
+                                        </td>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('a) Period of Employment (Start date(dd-mm-yyyy) - End date(dd-mm-yyyy) - Candidate')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('b) Period of Employment (Start date(dd-mm-yyyy) - End date(dd-mm-yyyy) - HR Feedback')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                    </tr>
+                                    <tr>
+                                        <td class="black-text text-left" style="padding: 3px;">b) Last
+                                            Designation of
+                                            Candidate
+                                        </td>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('c) Last Designation of Candidate - Candidate')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('d) Last Designation of Candidate - HR Feedback')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                    </tr>
+                                    <tr>
+                                        <td class="black-text text-left" style="padding: 3px;">b) Last Drawn
+                                            Salary
+                                        </td>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('e) Last Drawn Salary - Candidate')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                        <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                            <td th:if="${basicData.contains('f) Last Drawn Salary - HR Feedback')}"
+                                                class="grey-text text-left" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </div>
+                                    </tr>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('g) Reporting Authority')}">
+                                            <td class="black-text text-left" style="padding: 3px;">g) Reporting
+                                                Authority
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('h) Reason for Leaving')}">
+                                            <td class="black-text text-left" style="padding: 3px;">h) Reason for
+                                                Leaving
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Mode of Verification')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Mode of
+                                                Verification
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Remarks')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Remarks</td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;">
+                                                <div class="grey-text text-left" colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div th:each="basicData, row : ${vendorsourcename.vendorAttirbuteValue}">
+                                        <tr th:if="${basicData.contains('Employer Authenticity')}">
+                                            <td class="black-text text-left" style="padding: 3px;">Employer
+                                                Authenticity
+                                            </td>
+                                            <td class="grey-text text-left" colspan="2" style="padding: 3px;">
+                                                <div class="grey-text text-left" style="padding: 3px;"colspan="2"
+                                                     th:with="splitValue=${#strings.listSplit(basicData, '=')}">
+                                                <span class="grey-text text-left" style="padding: 3px;" th:if="${splitValue.size() &gt;= 1}"
+                                                      th:text="${splitValue[1]}">
+                                                </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                </th:block>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'EMPLOYMENT')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+        <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+            <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+					<th:block th:each="value : ${entry.value}">
+                        <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                             style="width: 600px; height: auto;">
+                    </th:block>
+            </span>
+        </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+        </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- EMPLOYMENT   checks with proofs ends-->
+    <!--  ADDRESS checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'ADDRESS')}">
+                <div class="table-container" style="page-break-after:always;"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                                  #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                                  vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                                      class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td class="text-left" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>
+                                    </td>
+                                </tr>
+                                <tr th:each="vendoratts : ${vendorsourcename.vendorAttirbuteValue}"
+                                    th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;" th:if="${splitValue.size() &gt;= 1}"
+                              th:text="${splitValue[0]}"></span>
+                                    </td>
+                                    <td class="grey-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="grey-text text-left" style="font-size: 18px" th:if="${splitValue.size() &gt;= 2}"
+                              th:text="${splitValue[1]}"></span>
+                                    </td>
+
+                                </tr>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'ADDRESS')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+        <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+            <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+					<th:block th:each="value : ${entry.value}">
+                        <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                             style="width: 600px; height: auto;">
+                    </th:block>
+            </span>
+        </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+        </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ADDRESS   checks with proofs ends-->
+    <!--  IDENTITY checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'IDENTITY')}">
+                <div class="table-container"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                     style="page-break-after: always;">
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                                  #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                                  vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                                      class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td class="text-left" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>
+                                    </td>
+                                </tr>
+                                <tr th:each="vendoratts : ${vendorsourcename.vendorAttirbuteValue}"
+                                    th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;" th:if="${splitValue.size() &gt;= 1}"
+                              th:text="${splitValue[0]}"></span>
+                                    </td>
+                                    <td class="grey-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="grey-text text-left" style="font-size: 18px;" th:if="${splitValue.size() &gt;= 2}"
+                              th:text="${splitValue[1]}"></span>
+                                    </td>
+
+                                </tr>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'IDENTITY')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+        <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+            <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+					<th:block th:each="value : ${entry.value}">
+                        <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                             style="width: 600px; height: auto;">
+                    </th:block>
+            </span>
+        </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+        </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- IDENTITY   checks with proofs ends-->
+    <!--  Ofac checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'OFAC CHECK')}">
+                <div class="table-container"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                     style="page-break-after: always;">
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                                  #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                                  vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                                      class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td class="text-left" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>
+                                    </td>
+                                </tr>
+                                <tr th:each="vendoratts : ${vendorsourcename.vendorAttirbuteValue}"
+                                    th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;" th:if="${splitValue.size() &gt;= 1}"
+                              th:text="${splitValue[0]}"></span>
+                                    </td>
+                                    <td class="grey-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="grey-text text-left" style="font-size: 18px;" th:if="${splitValue.size() &gt;= 2}"
+                              th:text="${splitValue[1]}"></span>
+                                    </td>
+
+                                </tr>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'OFAC CHECK')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+        <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+            <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+					<th:block th:each="value : ${entry.value}">
+                        <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                             style="width: 600px; height: auto;">
+                    </th:block>
+            </span>
+        </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+        </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Ofac  checks with proofs ends-->
+    <!--  Legal right To work checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'LEGAL RIGHT TO WORK')}">
+                <div class="table-container"
+                     th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                    style="page-break-after: always">
+
+                    <table class="table-st employer-name-verification" border="0">
+                        <div class="text-center">
+                            <div>
+                                <br>
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                      th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                                  #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                                  vendorsourcename.sourceName}"
+                                      th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"></span>
+                                <span th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}"
+                                      class="line-break"></span>
+                                <tr th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 30%; padding: 5px;">
+                                        Particular
+                                    </td>
+                                    <td class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;">
+                                        Remarks
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td class="text-left" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left">
+										<a th:text="RED"></a>
+										</span>
+                                    </td>
+                                </tr>
+                                <tr th:each="vendoratts : ${vendorsourcename.vendorAttirbuteValue}"
+                                    th:if="${not #lists.isEmpty(vendorsourcename.vendorAttirbuteValue)}">
+                                    <td class="black-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;" th:if="${splitValue.size() &gt;= 1}"
+                              th:text="${splitValue[0]}"></span>
+                                    </td>
+                                    <td class="grey-text text-left" style="padding: 5px;"
+                                        th:with="splitValue=${#strings.listSplit(vendoratts, '=')}">
+                        <span class="grey-text text-left" style="font-size: 18px;" th:if="${splitValue.size() &gt;= 2}"
+                              th:text="${splitValue[1]}"></span>
+                                    </td>
+
+                                </tr>
+                            </div>
+                        </div>
+                    </table>
+                    <br>
+                    <!--        start of documents -->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'LEGAL RIGHT TO WORK')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+                                        <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                            <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                    <th:block th:each="value : ${entry.value}">
+                                                        <img th:src="'data:image/png;base64,' + ${value}"
+                                                             alt="PDF Image"
+                                                             style="width: 600px; height: auto;">
+                                                    </th:block>
+                                            </span>
+                                        </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--        end  of documents -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Legal right To work checks with proofs ends-->
+    <!--  CRIMINAL checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'CRIMINAL')}">
+
+                <div class="table-container" th:if="${not #lists.isEmpty(root.criminalCheckList)}" style="page-break-after: always">
+                  <!--table  forcriminal check-->
+                    <th:block th:each="entry : ${root.criminalCheckList}">
+                        <!-- Check conditions for adding the table -->
+                        <th:block
+                                th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key)) and (not #lists.isEmpty(entry.value.civilProceedingList) or not #lists.isEmpty(entry.value.criminalProceedingList))}">
+                            <div class="text-center mb-3">
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                    <b th:text="${entry.key}"></b>
+                                </span>
+                            </div>
+                            <span class="line-break"></span>
+                            <table class="table-st" border="0">
+                                <!-- Table for Civil Proceedings -->
+                                <tr>
+                                    <td class="grey-bg text-left white-heading" colspan="5"
+                                        style="padding: 3px;">Civil Proceedings
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="grey-text text-left" style="padding: 3px">Includes
+                                        Original
+                                        Suit,
+                                        Miscellaneous Suit, Execution and Arbitration Case
+                                    </td>
+                                </tr>
+                                <tr>
+									<td  class="black-text text-left" style="width: 30%; padding: 5px;">
+										Check Status
+									</td>
+									<td class="text-center" colspan="4" style="padding: 5px; background-color: rgb(226, 29, 68,0.6)">
+										<span class="black-text text-left" style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+										<a th:text="RED"></a>
+										</span>	
+									</td>
+								</tr>
+                                <tr class="grey-bg text-center white-heading">
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Date of
+                                        Search
+                                    </td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Court</td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Jurisdiction
+                                    </td>
+                                    <td class="white-heading" style="width: 25%; padding: 3px">Name of the
+                                        Court
+                                    </td>
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Result</td>
+                                </tr>
+                                <tr class="text-center" th:each="proceeding : ${entry.value.civilProceedingList}">
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.dateOfSearch}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.court}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.jurisdiction}"></td>
+                                    <td class="grey-text text-center" style="width: 25%; padding: 3px"
+                                        th:text="${proceeding.nameOfTheCourt}"></td>
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.result}"></td>
+                                </tr>
+                            </table>
+                            <span class="line-break"></span>
+                            <table class="table-st" border="0">
+                                <!-- Table for Criminal Proceedings -->
+                                <tr>
+                                    <td class="grey-bg text-left white-heading" colspan="5"
+                                        style="padding: 3px;">Criminal Proceedings
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="grey-text text-left" style="padding: 3px">Includes
+                                        Criminal
+                                        Petitions,
+                                        Criminal Appeal, Sessions Case, Special Sessions Case, Criminal Miscellaneous
+                                        Petition, and Criminal Revision Appeal
+                                    </td>
+                                </tr>
+                                <tr class="grey-bg text-center white-heading">
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Date of
+                                        Search
+                                    </td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Court</td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">
+                                        Jurisdiction
+                                    </td>
+                                    <td class="white-heading" style="width: 25%; padding: 3px">Name of the
+                                        Court
+                                    </td>
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Result</td>
+                                </tr>
+                                <tr class="text-center" th:each="proceeding : ${entry.value.criminalProceedingList}">
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.dateOfSearch}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.court}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.jurisdiction}"></td>
+                                    <td class="grey-text text-center" style="width: 25%; padding: 3px"
+                                        th:text="${proceeding.nameOfTheCourt}"></td>
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.result}"></td>
+                                </tr>
+                            </table>
+                        </th:block>
+                    </th:block>
+                    <br>
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'CRIMINAL')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+                                    <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                        <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                <th:block th:each="value : ${entry.value}">
+                                                    <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                                                         style="width: 600px; height: auto;">
+                                                </th:block>
+                                        </span>
+                                    </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!--  CRIMINAL checks with proofs ends-->
+    <!--    start of global database check-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'GLOBAL DATABASE CHECK')}">
+                <div class="table-container" style="page-break-inside: auto">
+                    <div class="text-center"
+                         style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">Database Check
+                    </div>
+                    <th:block th:each="dataMap : ${root.dataList}">
+                        <div th:if="${dataMap.containsKey('GLOBAL')}">
+                            <table class="table-st">
+                                <!--<span style="color: black;font-family: 'Roboto'; font-size: 15px; font-weight: bold;"> <b th:text="'INDIA'"></b></span>-->
+                                <tr>
+                                    <td class="grey-bg text-center white-heading" colspan="2"
+                                        style="padding: 3px; text-align: center;">India
+                                        Level
+                                        Database Search
+                                    </td>
+                                </tr>
+                                 <tr>
+									<td class="black-text text-left" style="width: 30%; padding: 5px;">
+										Check Status
+									</td>
+									<td class="text-center" style="padding: 5px; background-color: rgb(226, 29, 68,0.6);width: 25%;">
+										<span class="black-text text-left" style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+										<a th:text="RED"></a>
+										</span>	
+									</td>
+								</tr>
+                                <tr>
+                                    <td class="grey-bg text-center white-heading" style="padding: 3px; text-align: center;">
+                                        Database Details
+                                    </td>
+                                    <th class="grey-bg text-center white-heading" style="padding: 3px;">Verified</th>
+                                </tr>
+                               
+                                <tr th:each="item : ${dataMap['GLOBAL']}">
+                                    <td class="grey-text text-left" style="width: 75%; padding: 3px;"
+                                        th:text="${item.label}"></td>
+                                    <td class="grey-text text-left" style="width: 25%; padding: 3px;"
+                                        th:text="${item.value}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <span class="line-break"></span>
+                        <div th:if="${dataMap.containsKey('INDIA')}">
+                            <table class="table-st">
+                                <!--<span style="color: black;font-family: 'Roboto'; font-size: 15px; font-weight: bold;"> <b th:text="'GLOBAL'"></b></span>-->
+                                <tr>
+                                    <td class="grey-bg text-center white-heading" colspan="2"
+                                        style="padding: 3px; text-align: center;">Global
+                                        Level
+                                        Database Search
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="grey-bg text-center white-heading" style="padding: 3px; text-align: center;">
+                                        Database Details
+                                    </td>
+                                    <th class="grey-bg text-center white-heading" style="padding: 3px;">Verified</th>
+                                </tr>
+                                <tr th:each="item : ${dataMap['INDIA']}">
+                                    <td class="grey-text text-left" style="width: 75%; padding: 3px;"
+                                        th:text="${item.label}"></td>
+                                    <td class="grey-text text-left" style="width: 25%; padding: 3px;"
+                                        th:text="${item.value}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </th:block>
+                    <br>
+                    <!--        start of documents  for  only global database check-->
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.equalsIgnoreCase(vendorsourcename.sourceName, 'GLOBAL DATABASE CHECK')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+                                    <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                        <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                <th:block th:each="value : ${entry.value}">
+                                                    <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                                                         style="width: 600px; height: auto;">
+                                                </th:block>
+                                        </span>
+                                    </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--        end of documents  for  only global database check-->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--    end of global database check-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div class="text-center" th:if="${vendorsourcename != null}"  >
+                <div th:unless="${#strings.equalsIgnoreCase(vendorsourcename.sourceName, 'GLOBAL DATABASE CHECK') or #strings.contains(vendorsourcename.sourceName, 'EDUCATION') or #strings.contains(vendorsourcename.sourceName, 'LEGAL RIGHT TO WORK') or #strings.contains(vendorsourcename.sourceName, 'EMPLOYMENT') or #strings.contains(vendorsourcename.sourceName, 'ADDRESS') or #strings.contains(vendorsourcename.sourceName, 'IDENTITY') or #strings.contains(vendorsourcename.sourceName, 'OFAC CHECK') or #strings.contains(vendorsourcename.sourceName, 'CRIMINAL')}">
+                               <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                                     th:text="${#strings.containsIgnoreCase(vendorsourcename.sourceName, 'EDUCATION') ?
+                                                                      #strings.substring(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(vendorsourcename.sourceName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                                                                      vendorsourcename.sourceName}"></span>
+                    <br>
+                    <div th:each="encodedImageMap : ${root.pdfByes}">
+                        <div th:each="entry : ${encodedImageMap}">
+                                    <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                        <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                <th:block th:each="value : ${entry.value}">
+                                                    <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                                                         style="width: 600px; height: auto;">
+                                                </th:block>
+                                        </span>
+                                    </span>
+                            <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                    </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	  <div>
+        <p
+           style="color: black; font-size: 10pt; text-align: justify; max-width: 700px; margin: 0 auto; font-family:Calibri, sans-serif; font-weight: normal;">
+            <span class="black-text">Disclaimer:</span>
+            This report only sets out information obtained from records searched by CROSSBOW. And is issued
+            on "as is where is" basis. No opinion is provided in respect of the corporate entities or individuals who
+            are the
+            subject of the report here in. CROSSBOW abides by the FCPA (Foreign Corrupt Practices Act) & FCRA (Fair
+            Credit Reporting Act) Policies.
+            This report does not constitute recommendations as to what action should be taken. It is difficult to verify
+            all aspects of
+            the information obtained due to the nature of the research and the limitations of obtaining such information
+            from public
+            records. Thus, while due care has been taken to ensure the accuracy of the compilation of information
+            contained in this report,
+            given the limitations of obtaining such information as noted above, no responsibility will be taken by
+            CROSSBOW for the
+            consequences of relying upon information contained in this report. All information supplied in this report
+            is intended to be for the
+            sole purpose of the client's evaluation and is not intended for public dissemination.
+        </p>
+    </div>
+	</section>
+</body>
+</html>

@@ -35,11 +35,4 @@ public class UpdateSubmittedCandidatesResponseDto {
     private List<liReportDetails> liReportDetails;
 
 
-    public UpdateSubmittedCandidatesResponseDto(Long CandidateID, String PSNO, String Name, String RequestID, String VendorName) {
-        this.CandidateID = String.valueOf(CandidateID);
-        this.PSNO = PSNO;
-        this.Name = Name;
-        this.RequestID = RequestID;
-        this.VendorName = VendorName;
-    }
 }

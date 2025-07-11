@@ -1,4 +1,4 @@
-package com.aashdit.digiverifier.config.candidate.dto; 
+package com.aashdit.digiverifier.config.candidate.dto;
 
 
 import com.aashdit.digiverifier.common.dto.ContentDTO;
@@ -8,11 +8,11 @@ import java.util.List;
 
 @Data
 public class CandidateCaseDetailsDTO {
-	
-	private String addComments;
 
-	private String candidateCode;
+    private String addComments;
 
-	private Long id;
-	
+    private String candidateCode;
+
+    private Long id;
+
 }

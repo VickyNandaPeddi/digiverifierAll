@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class EducationVerificationDTO extends CommonVerificationDto {
 
-	private String degree;
-	
-	private String university;
-	
+    private String degree;
+
+    private String university;
+
 
 }

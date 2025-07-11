@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 public class CandidateInvitationSentDto {
-	
-	private List<String> candidateReferenceNo;
-	
-	private String statuscode;
+
+    private List<String> candidateReferenceNo;
+
+    private String statuscode;
 
 }

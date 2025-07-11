@@ -6,13 +6,13 @@ import lombok.Data;
 
 @Data
 public class CommonVerificationDto {
-	
-	private String input;
-	
-	private String output;
-	
-	private SourceEnum source;
-	
-	private VerificationStatus verificationStatus;
-	
+
+    private String input;
+
+    private String output;
+
+    private SourceEnum source;
+
+    private VerificationStatus verificationStatus;
+
 }

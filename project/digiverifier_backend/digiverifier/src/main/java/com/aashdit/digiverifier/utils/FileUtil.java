@@ -64,7 +64,7 @@ public class FileUtil {
                 if (ze.isDirectory()) {
                     // Create the directory if it doesn't exist
                     File directory = new File(entryPath);
-                    if (directory.exists()==false) {
+                    if (directory.exists() == false) {
                         directory.mkdirs();
                     }
                 }
@@ -109,7 +109,8 @@ public class FileUtil {
 //                if (extensionIndex > -1) {
 //                    fileExtension = fileName.substring(extensionIndex);
 //                }
-////                File newFile = new File(destDir + File.separator + fileName);
+
+    /// /                File newFile = new File(destDir + File.separator + fileName);
 //                File newFile = new File(destDir + File.separator + entryFileName + fileExtension);
 //                System.out.println("Unzipping to " + newFile.getAbsolutePath());
 //                //create directories for sub directories in zip
@@ -133,7 +134,6 @@ public class FileUtil {
 //        }
 //
 //    }
-
     public void createZipFileFromByteArray(byte[] data, String destPath) throws IOException {
         ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
         byte[] buffer = new byte[1024];

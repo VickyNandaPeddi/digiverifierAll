@@ -1,21 +1,9 @@
 package com.aashdit.digiverifier.config.superadmin.model;
 
-import java.io.Serializable;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
-import com.aashdit.digiverifier.config.admin.model.VendorChecks;
-import com.aashdit.digiverifier.config.admin.model.VendorUploadChecks;
-
+import jakarta.persistence.*;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data

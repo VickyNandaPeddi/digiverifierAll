@@ -10,14 +10,21 @@ public class EnvironmentVal {
     @Value("${aws.access.key}")
     private String accessKey;
 
+
     @Value("${aws.secret.key}")
     private String secretKey;
+    @Value("${com.dgv.sqlusername}")
+    private String sqlusername;
+    @Value("${com.dgv.sqlpassword}")
+    private String sqlpassword;
 
     @Value("${aws.region}")
     private String awsRegion;
 
     @Value("${mysql.secret.key}")
     private String mysqlSecretKey;
+    @Value("${spring.datasource.url}")
+    private String datasourceUrl;
 
     @Value("${REDIRECT.ANGULAR.AFTER.DIGILOCKER}")
     private String redirectAngularAfterDigiLocker;
@@ -72,6 +79,12 @@ public class EnvironmentVal {
 
     @Value("${com.dgv.client.access.token.url}")
     private String dgvClientAccessTokenUrl;
+    @Value("${com.dgv.client.acess.conventional.vendor.username}")
+    private String mtUsername;
+    @Value("${com.dgv.client.acess.conventional.vendor.password}")
+    private String mtPassword;
+    @Value("${com.dgv.client.acess.conventional.vendor.granttype}")
+    private String mtGrantType;
 
     @Value("${com.dgv.client.access.code.uri}")
     private String dgvClientAccessCodeUri;
@@ -82,6 +95,16 @@ public class EnvironmentVal {
     @Value("${com.dgv.client.acess.conventional.vendor.fetchvendorrequestdetails}")
     private String conventionalVendorFetchVendorRequestDetails;
 
+    @Value("${com.dgv.client.acess.conventional.vendor.fetchpendingreports}")
+    private String conventionalVendorFetchPendingProofs;
+    @Value("${com.dgv.client.acess.conventional.vendor.uploadbgvpendingreports}")
+    private String conventionalVendoruploadBgvPendingReports;
+
+
+    @Value("${com.dgv.client.acess.conventional.vendor.updatebgvstatusrowwise}")
+    private String conventionalUpdateBgvCheckStatusRowwise;
+    @Value("${com.dgv.client.acess.conventional.vendor.updatebgvacknoledgement}")
+    private String conventionalUpdateBGVRequestAcknowledgement;
     @Value("${com.dgv.client.response.type}")
     private String dgvClientResponseType;
 
@@ -144,6 +167,43 @@ public class EnvironmentVal {
 
     @Value("${com.dgv.client.access.itr.post.logininfo.url}")
     private String dgvClientAccessItrPostLoginInfoUrl;
+
+    @Value("${com.digiverifier.host}")
+    private String digiverifierFrontendHost;
+
+    @Value("${backend.host}")
+    private String backendHost;
+
+    @Value("${css.path.local}")
+    private String cssPathLocal;
+
+    @Value("${css.path.server}")
+    private String cssPathServer;
+
+    @Value("${com.digiverifier.emailreciver}")
+    private String emailReciver;
+
+    @Value("${com.digiverifier.copiedreciver}")
+    private String copiedReciver;
+
+    @Value("${com.digiverifier.gst.client_id}")
+    private String client_id;
+
+    @Value("${com.digiverifier.gst.client_secret}")
+    private String client_secret;
+
+    @Value("${com.digiverifier.gst.token_url}")
+    private String tokenUrl;
+
+    @Value("${com.digiverifier.gst.transactionid_url}")
+    private String transactionIdUrl;
+
+
+    @Value("${com.digiverifier.gst.fetch_gst_new}")
+    private String gstFetchUrl;
+
+    @Value("${com.digiverifier.gst.fetch_mca}")
+    private String mcaFetchUrl;
 
 
 }

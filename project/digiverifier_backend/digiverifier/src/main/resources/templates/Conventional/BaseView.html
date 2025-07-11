@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en-us" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>DigiVerifier Pdf</title>
+    <meta charset="UTF-8"/>
+    <link th:href="${cssPath + '/common.css'}" rel="stylesheet"/>
+    <link th:href="@{https://fonts.googleapis.com/css?family=Calibri:400,700,400,700&display=swap}" rel="stylesheet"/>
+    <style>
+        .table-st {
+            clear: both;
+            width: 100%;
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+          .table-cell {
+            overflow: auto;
+            word-wrap: break-word;
+        }
+        .table-st tr {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+        .table-st tr td {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+            padding: 10px;
+        }
+        .table-st tr td span {
+            margin-left: 5px;
+        }
+        .table-container {
+            page-break-inside: avoid; /* Prevent table from splitting across pages */
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-left {
+            text-align: left;
+        }
+        .blue-bg {
+            background-color: #808080;
+        }
+        .grey-bg {
+            background-color: rgba(49, 119, 235, 0.8);
+        }
+        .black-heading {
+            color: black;
+            font-size: 15px !important;
+            font-weight: 700;
+            font-family: 'Calibri';
+        }
+        .white-heading {
+			color: #FFF;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 15pt;
+        }
+        .black-text {
+            color: black;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 13pt;
+        }
+        .grey-text {
+            color: black;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 12pt;
+        }
+        .white-text {
+            color: #fff;
+            font-weight: 700 !important;;
+            font-size: 13px;
+            font-family: 'Calibri';
+        }
+        .line-break {
+            display: block;
+            height: 15px;
+        }
+        .green-status {
+            margin: 0px;
+            color: #008000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .amber-status {
+            margin: 0px;
+            color: #ffA500;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .red-status {
+            margin: 0px;
+            color: #ff0000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .invalid-status {
+            margin: 0px;
+            color: #000000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .black-box {
+            border: 1px solid black;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .color-container {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .box {
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            background-color: transparent; /* Set the desired background color */
+            display: inline-block;
+        }
+        .red {
+            background-color: red;
+        }
+        .green {
+            background-color: green;
+        }
+        .amber {
+            background-color: #ffA500;;
+        }
+        .yellow {
+            background-color: yellow;
+        }
+        @media print {
+         tr, td {
+                page-break-inside: avoid;
+            }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body style="background-color:#fff;padding:0px;margin:0px;position:relative;font-family: 'Calibri', sans-serif;color:#666666;">
+<section class="wrapper" style="width:100%;margin:0 auto;height:80%;">
+    <table class="table-st">
+        <tr>
+            <td class="grey-bg text-center" colspan="4"
+                th:if="${#strings.equalsIgnoreCase(root.reportType, 'INTERIM')}">
+                <span style="color: #FFF; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 15pt;">INTERIM REPORT</span>
+            </td>
+            <td class="grey-bg text-center" colspan="4" th:if="${#strings.equalsIgnoreCase(root.reportType, 'FINAL')}">
+                <span style="color: #FFF; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 15pt;">FINAL REPORT</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Client Name
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						LTIMINDTREE LIMITED
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Applicant Name
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.name}"></a>
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Candidate Id
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.candidateId}"></a>
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Request Id
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.requestId}"></a>
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Case Initiation Date
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${#dates.format(root.caseInitiationDate, 'dd-MMM-yyyy')}"></a>
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Report Date
+					</span>
+            </td>
+            <td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'INTERIM')}">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:if="${root.interimReportDate != null}"
+                           th:text="${#dates.format(root.interimReportDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.interimReportDate == null}"
+                           th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+					</span>
+            </td>
+            <td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'FINAL')}">
+                    <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                        <a th:if="${root.finalReportDate == null}"
+                           th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.finalReportDate != null}"
+                           th:text="${#dates.format(root.finalReportDate, 'dd-MMM-yyyy')}"></a>
+                    </span>
+            </td>
+            <td style="width: 80%;" th:if="${#strings.equalsIgnoreCase(root.reportType, 'DISCREPANCY')}">
+                    <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                        <a th:if="${root.discrepancyReportDate == null}"
+                           th:text="${#dates.format(root.currentDate, 'dd-MMM-yyyy')}"></a>
+                        <a th:if="${root.discrepancyReportDate != null}"
+                           th:text="${#dates.format(root.discrepancyReportDate, 'dd-MMM-yyyy')}"></a>
+                    </span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Location
+					</span>
+            </td>
+            <td style="width: 80%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+						<a th:text="${root.address}"></a>
+					</span>
+            </td>
+        </tr>
+        <tr class="text-left">
+            <td style="width: 30%;">
+					<span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 13pt;">
+						Report Status
+					</span>
+            </td>
+            <!--
+            <td style="width: 80%; background-color: rgb(226, 29, 68,0.6);">
+                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                    <a th:text="RED"></a>
+                </span>
+            </td>
+            -->
+            <td th:style="'padding: 5px; width: 80%;' + (${root.colorCode} == 'RED' ? 'background-color: rgb(226, 29, 68,0.6);'
+            : (${root.colorCode} == 'GREEN' ? 'background-color: #74B72E;'
+             : (${root.colorCode} == 'YELLOW' ? 'background-color: #CCCC00;'
+            : (${root.colorCode} == 'AMBER' ? 'background-color: orange;' : ''))))"
+                class="text-center">
+                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: normal; font-size: 13pt;">
+                    <b th:text="${root.colorCode}"></b>
+                </span>
+            </td>
+        </tr>
+    </table>
+    <span class="line-break"></span>
+    <span class="line-break"></span>
+    <span class="box green"></span>
+    <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Green (Positive)</span>
+    <span class="box amber"></span>
+    <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Amber (Unable to Verify)</span>
+    <span class="box yellow"></span>
+    <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Yellow (Insufficiency)</span>
+    <span class="box red"></span>
+    <span style="font-family:Calibri; font-size: 14px; font-weight: bold; color: black;">Red (Major/Minor Discrepancy)</span>
+    <!-- </div> -->
+    <div style="page-break-after:always;"></div>
+    <!-- Executive Summary first table start -->
+    <table class="table-st employer-name-verification table-container" border="0" style="page-break-inside: avoid; border:none;">
+        <tr>
+            <td colspan="4" class="text-center" style="border: none;">
+                <div style="color: black; font-family: Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                    <b>Executive Summary</b>
+                </div>
+            </td>
+        </tr>
+        <tr class="text-center">
+            <td class="grey-bg" style="width:28%; padding: 5px;">
+                <span class="white-heading">Checks</span>
+            </td>
+            <td class="grey-bg" style="width:15%; padding: 5px;">
+                <span class="white-heading">Check Status</span>
+            </td>
+            <td class="grey-bg" style="width:28%; padding: 5px;">
+                <span class="white-heading">Remarks</span>
+            </td>
+            <td class="grey-bg" style="width:25%; padding: 5px;">
+                <span class="white-heading">Details</span>
+            </td>
+        </tr>
+        <!-- First Page (Displaying the first ten records) starts -->
+        <tr th:each="licheck, stat: ${root.liChecksDetails}" th:if="${stat.index < 9}">
+            <td class="black-text text-left">
+            <span class="black-text" th:text="${#strings.containsIgnoreCase(licheck.checkName, 'EDUCATION') ?
+                #strings.substring(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                licheck.checkName}">
+            </span>
+            </td>
+            <td class="black-text text-center">
+            <span class="black-text"
+                  th:text="${licheck.CheckStatus.equalsIgnoreCase('CLEAR') ? 'GREEN'
+                      : licheck.CheckStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'AMBER'
+                      : licheck.CheckStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'YELLOW'
+                      : (licheck.CheckStatus.equalsIgnoreCase('MINORDISCREPANCY') or licheck.CheckStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'RED'
+                      : licheck.CheckStatus}"
+                  th:style="${licheck.CheckStatus.equalsIgnoreCase('CLEAR') ? 'color: #74B72E'
+                      : licheck.CheckStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'color: orange'
+                      : licheck.CheckStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'color: #CCCC00'
+                      : (licheck.CheckStatus.equalsIgnoreCase('MINORDISCREPANCY') or licheck.CheckStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'color: rgba(226, 29, 68)'
+                      : ''}">
+            </span>
+            </td>
+            <td class="black-text text-center table-cell">
+                <span class="black-text" th:text="${licheck.CheckRemarks}"></span>
+            </td>
+            <td class="black-text text-center">
+                <span class="black-text" th:text="${licheck.disableStatus == null or licheck.disableStatus.trim().isEmpty() ? '-' : licheck.disableStatus}"></span>
+            </td>
+        </tr>
+    </table>
+    <!-- Executive Summary first table end -->
+
+    <!-- Executive Summary second table start -->
+    <div th:if="${#lists.size(root.liChecksDetails) > 9}" style="page-break-before: always;">
+        <table class="table-st employer-name-verification table-container" border="0" style="page-break-inside: avoid; border:none;">
+            <!-- Second Page (Displaying the remaining records) starts -->
+            <tr th:each="licheck, stat: ${root.liChecksDetails}" th:if="${stat.index >= 9}">
+                <td class="black-text text-left">
+                <span class="black-text" th:text="${#strings.containsIgnoreCase(licheck.checkName, 'EDUCATION') ?
+                    #strings.substring(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 0, #strings.indexOf(licheck.checkName.replace('EDUCATION', 'EDUCATION CHECK'), 'CHECK') + 5) :
+                    licheck.checkName}">
+                </span>
+                </td>
+                <td class="black-text text-center">
+                <span class="black-text"
+                      th:text="${licheck.CheckStatus.equalsIgnoreCase('CLEAR') ? 'GREEN'
+                          : licheck.CheckStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'AMBER'
+                          : licheck.CheckStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'YELLOW'
+                          : (licheck.CheckStatus.equalsIgnoreCase('MINORDISCREPANCY') or licheck.CheckStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'RED'
+                          : licheck.CheckStatus}"
+                      th:style="${licheck.CheckStatus.equalsIgnoreCase('CLEAR') ? 'color: #74B72E'
+                          : licheck.CheckStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'color: orange'
+                          : licheck.CheckStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'color: #CCCC00'
+                          : (licheck.CheckStatus.equalsIgnoreCase('MINORDISCREPANCY') or licheck.CheckStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'color: rgba(226, 29, 68)'
+                          : ''}">
+                </span>
+                </td>
+                <td class="black-text text-center table-cell">
+                    <span class="black-text" th:text="${licheck.CheckRemarks}"></span>
+                </td>
+                <td class="black-text text-center">
+                    <span class="black-text" th:text="${licheck.disableStatus == null or licheck.disableStatus.trim().isEmpty() ? '-' : licheck.disableStatus}"></span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <!-- Executive Summary second table end -->
+
+</section>
+</body>
+</html>

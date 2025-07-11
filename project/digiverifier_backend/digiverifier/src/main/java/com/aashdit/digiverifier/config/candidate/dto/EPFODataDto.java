@@ -7,10 +7,10 @@ import java.util.List;
 
 @Data
 public class EPFODataDto {
-	
-	private String candidateName;
-	
-	private String UANno;
-	
-	private List<EpfoDataResDTO> epfoDataList;
+
+    private String candidateName;
+
+    private String UANno;
+
+    private List<EpfoDataResDTO> epfoDataList;
 }

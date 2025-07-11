@@ -2,13 +2,10 @@ package com.aashdit.digiverifier.vendorcheck.model;
 
 import com.aashdit.digiverifier.config.admin.model.User;
 import com.aashdit.digiverifier.config.candidate.model.StatusMaster;
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.validator.constraints.UniqueElements;
 
-import javax.persistence.*;
 import java.util.Date;
 
 @Getter
@@ -19,11 +16,11 @@ public class ConventionalVendorCandidatesSubmitted {
 
     @Id
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "candidate_id")
-    private Long candidateId;
+    private String candidateId;
     @Column(name = "ps_no")
     private String psNo;
     @Column(name = "name")
@@ -53,4 +50,28 @@ public class ConventionalVendorCandidatesSubmitted {
 
     @Column(name = "old_request_type")
     private String oldRequestType;
+
+    @Column(name = "fast_track")
+    private String fastTrack;
+
+    @Column(name = "stop_check_recived_date")
+    private String stopCheckRecivedDate;
+
+
+    @Column(name = "fetch_licheck_and_candidate_data")
+    private Boolean fetchLicheckAndCandidateData;
+
+    @Column(name="pending_InterimReport_OnBasicChecks_Flag")
+    private String pendingInterimReportOnBasicChecksFlag;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
+
+    @Column(name = "updated_on")
+    private Date updatedOn;
+
+    @Column(name = "purged_date")
+    private Date purgedDate;
+
 }

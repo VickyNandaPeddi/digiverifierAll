@@ -1,57 +1,11 @@
 package com.aashdit.digiverifier.config.superadmin.service;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.mail.MessagingException;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
 import com.aashdit.digiverifier.common.ContentRepository;
 import com.aashdit.digiverifier.common.enums.ContentCategory;
 import com.aashdit.digiverifier.common.enums.ContentSubCategory;
 import com.aashdit.digiverifier.common.enums.ContentType;
 import com.aashdit.digiverifier.common.enums.FileType;
 import com.aashdit.digiverifier.common.model.Content;
-import com.aashdit.digiverifier.config.candidate.Enum.CandidateStatusEnum;
-import com.aashdit.digiverifier.config.candidate.Enum.IDtype;
-import com.aashdit.digiverifier.config.candidate.dto.*;
-import com.aashdit.digiverifier.config.candidate.model.*;
-import com.aashdit.digiverifier.config.candidate.repository.*;
-import com.aashdit.digiverifier.config.superadmin.Enum.ExecutiveName;
-import com.aashdit.digiverifier.config.superadmin.Enum.ReportType;
-import com.aashdit.digiverifier.config.candidate.service.CandidateService;
-import com.aashdit.digiverifier.config.superadmin.Enum.SourceEnum;
-import com.aashdit.digiverifier.config.superadmin.Enum.VerificationStatus;
-import com.aashdit.digiverifier.config.superadmin.model.Organization;
-import com.aashdit.digiverifier.config.superadmin.model.OrganizationExecutive;
-import com.aashdit.digiverifier.config.superadmin.model.ToleranceConfig;
-import com.aashdit.digiverifier.email.dto.Email;
-import com.aashdit.digiverifier.email.dto.EmailProperties;
-import com.aashdit.digiverifier.epfo.model.CandidateEPFOResponse;
-import com.aashdit.digiverifier.epfo.repository.CandidateEPFOResponseRepository;
-import com.aashdit.digiverifier.epfo.repository.EpfoDataRepository;
-import com.aashdit.digiverifier.epfo.model.EpfoData;
-import com.aashdit.digiverifier.itr.model.CanditateItrResponse;
-import com.aashdit.digiverifier.itr.model.ITRData;
-import com.aashdit.digiverifier.itr.repository.CanditateItrEpfoResponseRepository;
-import com.aashdit.digiverifier.itr.repository.ITRDataRepository;
-import com.aashdit.digiverifier.utils.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.StringUtils;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
 import com.aashdit.digiverifier.common.model.ServiceOutcome;
 import com.aashdit.digiverifier.config.admin.dto.VendorUploadChecksDto;
 import com.aashdit.digiverifier.config.admin.model.User;
@@ -60,15 +14,55 @@ import com.aashdit.digiverifier.config.admin.model.VendorUploadChecks;
 import com.aashdit.digiverifier.config.admin.repository.UserRepository;
 import com.aashdit.digiverifier.config.admin.repository.VendorChecksRepository;
 import com.aashdit.digiverifier.config.admin.repository.VendorUploadChecksRepository;
-import com.aashdit.digiverifier.config.superadmin.dto.CandidateDetailsForReport;
-import com.aashdit.digiverifier.config.superadmin.dto.OrganizationDto;
-import com.aashdit.digiverifier.config.superadmin.dto.ReportResponseDto;
-import com.aashdit.digiverifier.config.superadmin.dto.ReportSearchDto;
-import com.aashdit.digiverifier.config.superadmin.repository.ColorRepository;
-import com.aashdit.digiverifier.config.superadmin.repository.OrganizationRepository;
-import com.aashdit.digiverifier.config.candidate.repository.CandidateAddCommentRepository;
-
+import com.aashdit.digiverifier.config.candidate.Enum.CandidateStatusEnum;
+import com.aashdit.digiverifier.config.candidate.Enum.IDtype;
+import com.aashdit.digiverifier.config.candidate.dto.*;
+import com.aashdit.digiverifier.config.candidate.model.*;
+import com.aashdit.digiverifier.config.candidate.repository.*;
+import com.aashdit.digiverifier.config.candidate.service.CandidateService;
+import com.aashdit.digiverifier.config.superadmin.Enum.ExecutiveName;
+import com.aashdit.digiverifier.config.superadmin.Enum.ReportType;
+import com.aashdit.digiverifier.config.superadmin.Enum.SourceEnum;
+import com.aashdit.digiverifier.config.superadmin.Enum.VerificationStatus;
+import com.aashdit.digiverifier.config.superadmin.dto.*;
+import com.aashdit.digiverifier.config.superadmin.model.Organization;
+import com.aashdit.digiverifier.config.superadmin.model.OrganizationExecutive;
+import com.aashdit.digiverifier.config.superadmin.model.ToleranceConfig;
+import com.aashdit.digiverifier.config.superadmin.model.VendorMasterNew;
+import com.aashdit.digiverifier.config.superadmin.repository.*;
+import com.aashdit.digiverifier.email.dto.Email;
+import com.aashdit.digiverifier.email.dto.EmailProperties;
+import com.aashdit.digiverifier.epfo.model.CandidateEPFOResponse;
+import com.aashdit.digiverifier.epfo.model.EpfoData;
+import com.aashdit.digiverifier.epfo.repository.CandidateEPFOResponseRepository;
+import com.aashdit.digiverifier.epfo.repository.EpfoDataRepository;
+import com.aashdit.digiverifier.itr.model.ITRData;
+import com.aashdit.digiverifier.itr.repository.CanditateItrEpfoResponseRepository;
+import com.aashdit.digiverifier.itr.repository.ITRDataRepository;
+import com.aashdit.digiverifier.utils.*;
+import com.aashdit.digiverifier.vendorcheck.model.ConventionalVendorCandidatesSubmitted;
+import com.aashdit.digiverifier.vendorcheck.repository.ConventionalCandidatesSubmittedRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.aashdit.digiverifier.digilocker.service.DigilockerServiceImpl.DIGIVERIFIER_DOC_BUCKET_NAME;
 
@@ -160,6 +154,29 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private VendorUploadChecksRepository vendorUploadChecksRepository;
 
+    @Autowired
+    private SourceRepository sourceRepository;
+
+    @Autowired
+    private ConventionalCandidatesSubmittedRepository conventionalCandidatesSubmittedRepository;
+
+    @Autowired
+    private CandidateVerificationStateRepository candidateVerificationStateRepository;
+
+    @Autowired
+    private VendorMasterNewRepository vendorMasterNewRepository;
+
+    @Autowired
+    private VendorCheckStatusMasterRepository vendorCheckStatusMasterRepository;
+
+    @Autowired
+    private CandidateCafEducationRepository candidateCafEducationRepository;
+
+    @Autowired
+    private ConventionalCafCandidateEducationRepository conventionalCafCandidateEducationRepository;
+
+    @Autowired
+    private CandidateRepository candidateRepository;
 
     SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
@@ -202,400 +219,21 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public ServiceOutcome<ReportSearchDto> getCustomerUtilizationReportData(ReportSearchDto reportSearchDto) {
         ServiceOutcome<ReportSearchDto> svcSearchResult = new ServiceOutcome<ReportSearchDto>();
-        List<Object[]> resultList = null;
-        User user = SecurityHelper.getCurrentUser();
-        String strToDate = "";
-        String strFromDate = "";
-        List<Long> orgIds = new ArrayList<Long>();
-        ReportSearchDto reportSearchDtoObj = null;
-        try {
-            if (reportSearchDto == null) {
-                strToDate = ApplicationDateUtils.getStringTodayAsDDMMYYYY();
-                strFromDate = ApplicationDateUtils.subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 30);
-                if (user.getRole().getRoleCode().equals("ROLE_CBADMIN")) {
-                    orgIds.add(0, 0l);
-                } else {
-                    Long orgIdLong = user.getOrganization().getOrganizationId();
-                    orgIds.add(orgIdLong);
-                    reportSearchDto = new ReportSearchDto();
-                    reportSearchDto.setOrganizationIds(orgIds);
-                }
 
-            } else {
-                strToDate = reportSearchDto.getToDate();
-                strFromDate = reportSearchDto.getFromDate();
-                orgIds.addAll(reportSearchDto.getOrganizationIds());
-            }
-            Date startDate = format.parse(strFromDate + " 00:00:00");
-            Date endDate = format.parse(strToDate + " 23:59:59");
-            StringBuilder query = new StringBuilder();
-            if (reportSearchDto != null && reportSearchDto.getOrganizationIds() != null && reportSearchDto.getOrganizationIds().size() > 0 && reportSearchDto.getOrganizationIds().get(0) != 0l) {
-                query.append("SELECT t1.orgid,t1.orgname,t1.newuploadcount,t1.reinvitecount,t1.finalreportDeliveredcount,t1.intereimreportDeliveredcount,\n");
-                query.append("t2.pendingcount,t1.processDeclinecount,t1.invitationExpiredcount,t1.agentCount\n");
-                query.append("FROM\n");
-                query.append("(SELECT sm.organization_id AS orgid,organization.organization_name AS orgname,  \n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='NEWUPLOAD' OR statusMaster.status_code ='INVALIDUPLOAD') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS newuploadcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='REINVITE') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS reinvitecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='FINALREPORT') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS finalreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PENDINGAPPROVAL') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS intereimreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PROCESSDECLINED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS processDeclinecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONEXPIRED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS invitationExpiredcount,\n");
-                if (user.getRole().getRoleCode().equals("ROLE_AGENTSUPERVISOR")) {
-                    query.append("COUNT( DISTINCT CASE WHEN roleMaster.role_code ='ROLE_AGENTHR' AND userMaster.is_user_active =TRUE AND userMaster.user_id IN(?4) THEN userMaster.user_id END) AS agentCount \n");
-                } else if (user.getRole().getRoleCode().equals("ROLE_AGENTHR")) {
-                    query.append("0 AS agentCount \n");
-                } else {
-                    query.append("COUNT( DISTINCT CASE WHEN roleMaster.role_code ='ROLE_AGENTHR' AND userMaster.is_user_active =TRUE THEN userMaster.user_id END) AS agentCount \n");
-                }
-                query.append("FROM   t_dgv_service_master sm \n");
-                query.append("LEFT JOIN t_dgv_organization_master organization ON organization.organization_id = sm.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_basic candidatebasic ON candidatebasic.organization_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_status_history candidatestatushistory ON candidatestatushistory.candidate_id=candidatebasic.candidate_id \n");
-                query.append("LEFT JOIN t_dgv_status_master statusMaster ON statusMaster.status_master_id=candidatestatushistory.status_master_id \n");
-                query.append("LEFT JOIN t_dgv_user_master userMaster ON userMaster.orgainzation_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_role_master roleMaster ON roleMaster.role_id =userMaster.role_id  \n");
-                query.append("WHERE organization.is_active =TRUE \n");
-                if (user.getRole().getRoleCode().equals("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equals("ROLE_AGENTHR")) {
-                    query.append("AND candidatebasic.created_by IN (?4) \n");
-                }
-                query.append("AND organization.organization_id IN(?3)\n");
-                query.append("GROUP BY organization.organization_name,sm.organization_id ORDER BY organization.organization_name ASC) t1\n");
-                query.append("LEFT JOIN\n");
-                query.append("(SELECT sm.organization_id AS orgid,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONSENT' OR statusMaster.status_code='ITR' OR statusMaster.status_code='EPFO' OR statusMaster.status_code='DIGILOCKER' OR statusMaster.status_code='RELATIVEADDRESS') AND candidatestatus.last_updated_on BETWEEN ?1 AND ?2 THEN candidatestatus.candidate_id END) AS pendingcount\n");
-                query.append("FROM   t_dgv_service_master sm \n");
-                query.append("LEFT JOIN t_dgv_organization_master organization ON organization.organization_id = sm.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_basic candidatebasic ON candidatebasic.organization_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_status candidatestatus ON candidatestatus.candidate_id=candidatebasic.candidate_id\n");
-                query.append("LEFT JOIN t_dgv_status_master statusMaster ON statusMaster.status_master_id=candidatestatus.status_master_id \n");
-                query.append("LEFT JOIN t_dgv_user_master userMaster ON userMaster.orgainzation_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_role_master roleMaster ON roleMaster.role_id =userMaster.role_id  \n");
-                query.append("WHERE organization.is_active =TRUE \n");
-                if (user.getRole().getRoleCode().equals("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equals("ROLE_AGENTHR")) {
-                    query.append("AND candidatebasic.created_by IN (?4) \n");
-                }
-                query.append("AND organization.organization_id IN(?3)\n");
-                query.append("GROUP BY sm.organization_id ORDER BY organization.organization_name ASC) t2\n");
-                query.append("ON t1.orgid=t2.orgid  \n");
-
-
-                Query squery = entityManager.createNativeQuery(String.valueOf(query));
-                squery.setParameter(1, startDate);
-                squery.setParameter(2, endDate);
-                squery.setParameter(3, reportSearchDto.getOrganizationIds());
-                if (user.getRole().getRoleCode().equals("ROLE_AGENTSUPERVISOR")) {
-                    List<User> agentList = userRepository.findAllByAgentSupervisorUserId(user.getUserId());
-                    if (!agentList.isEmpty()) {
-                        List<Long> agentIdsList = agentList.parallelStream().map(x -> x.getUserId()).collect(Collectors.toList());
-                        agentIdsList.add(user.getUserId());
-                        reportSearchDto.setAgentIds(agentIdsList);
-                        squery.setParameter(4, reportSearchDto.getAgentIds());
-                    }
-                }
-                if (user.getRole().getRoleCode().equals("ROLE_AGENTHR")) {
-                    List<Long> agentIdsList = new ArrayList<>();
-                    agentIdsList.add(user.getUserId());
-                    reportSearchDto.setAgentIds(agentIdsList);
-                    squery.setParameter(4, reportSearchDto.getAgentIds());
-                }
-
-                resultList = squery.getResultList();
-            } else {
-                query.append("SELECT t1.orgid,t1.orgname,t1.newuploadcount,t1.reinvitecount,t1.finalreportDeliveredcount,t1.intereimreportDeliveredcount,\n");
-                query.append("t2.pendingcount,t1.processDeclinecount,t1.invitationExpiredcount,t1.agentCount\n");
-                query.append("FROM\n");
-                query.append("(SELECT sm.organization_id AS orgid,organization.organization_name AS orgname,  \n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='NEWUPLOAD' OR statusMaster.status_code ='INVALIDUPLOAD') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS newuploadcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='REINVITE') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS reinvitecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='FINALREPORT') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS finalreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PENDINGAPPROVAL') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS intereimreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PROCESSDECLINED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS processDeclinecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONEXPIRED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS invitationExpiredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN roleMaster.role_code ='ROLE_AGENTHR' AND userMaster.is_user_active =TRUE THEN userMaster.user_id END) AS agentCount \n");
-                query.append("FROM   t_dgv_service_master sm \n");
-                query.append("LEFT JOIN t_dgv_organization_master organization ON organization.organization_id = sm.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_basic candidatebasic ON candidatebasic.organization_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_status_history candidatestatushistory ON candidatestatushistory.candidate_id=candidatebasic.candidate_id \n");
-                query.append("LEFT JOIN t_dgv_status_master statusMaster ON statusMaster.status_master_id=candidatestatushistory.status_master_id \n");
-                query.append("LEFT JOIN t_dgv_user_master userMaster ON userMaster.orgainzation_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_role_master roleMaster ON roleMaster.role_id =userMaster.role_id  \n");
-                query.append("WHERE organization.is_active =TRUE \n");
-                query.append("GROUP BY organization.organization_name,sm.organization_id ORDER BY organization.organization_name ASC) t1\n");
-                query.append("LEFT JOIN\n");
-                query.append("(SELECT sm.organization_id AS orgid,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONSENT' OR statusMaster.status_code='ITR' OR statusMaster.status_code='EPFO' OR statusMaster.status_code='DIGILOCKER' OR statusMaster.status_code='RELATIVEADDRESS') AND candidatestatus.last_updated_on BETWEEN ?1 AND ?2 THEN candidatestatus.candidate_id END) AS pendingcount\n");
-                query.append("FROM   t_dgv_service_master sm \n");
-                query.append("LEFT JOIN t_dgv_organization_master organization ON organization.organization_id = sm.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_basic candidatebasic ON candidatebasic.organization_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_candidate_status candidatestatus ON candidatestatus.candidate_id=candidatebasic.candidate_id\n");
-                query.append("LEFT JOIN t_dgv_status_master statusMaster ON statusMaster.status_master_id=candidatestatus.status_master_id \n");
-                query.append("LEFT JOIN t_dgv_user_master userMaster ON userMaster.orgainzation_id=organization.organization_id \n");
-                query.append("LEFT JOIN t_dgv_role_master roleMaster ON roleMaster.role_id =userMaster.role_id  \n");
-                query.append("WHERE organization.is_active =TRUE \n");
-                query.append("GROUP BY sm.organization_id ORDER BY organization.organization_name ASC) t2\n");
-                query.append("ON t1.orgid=t2.orgid  \n");
-                Query squery = entityManager.createNativeQuery(String.valueOf(query));
-                squery.setParameter(1, startDate);
-                squery.setParameter(2, endDate);
-                resultList = squery.getResultList();
-            }
-            if (resultList != null && resultList.size() > 0) {
-                List<ReportResponseDto> pwdvMprReportDtoList = new ArrayList<ReportResponseDto>();
-                for (Object[] result : resultList) {
-                    ReportResponseDto reportResponseDto = new ReportResponseDto(
-                            Long.valueOf(String.valueOf(result[0])), String.valueOf(result[1]),
-                            Integer.valueOf(String.valueOf(result[2])), "NEWUPLOAD",
-                            Integer.valueOf(String.valueOf(result[3])), "REINVITE",
-                            Integer.valueOf(String.valueOf(result[4])), "FINALREPORT",
-                            Integer.valueOf(String.valueOf(result[5])), "PENDINGAPPROVAL",
-                            Integer.valueOf(String.valueOf(result[6])), "PENDINGNOW",
-                            Integer.valueOf(String.valueOf(result[7])), "PROCESSDECLINED",
-                            Integer.valueOf(String.valueOf(result[8])), "INVITATIONEXPIRED",
-                            Integer.valueOf(String.valueOf(result[9])));
-                    pwdvMprReportDtoList.add(reportResponseDto);
-                }
-                ReportResponseDto reportResponseDtoTotal = new ReportResponseDto
-                        (0l, "TOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getNewuploadcount()).sum(), "NEWUPLOADTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getReinvitecount()).sum(), "REINVITETOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getFinalreportCount()).sum(), "FINALREPORTTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInterimReportCount()).sum(), "PENDINGAPPROVALTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getPendingCount()).sum(), "PENDINGNOWTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getProcessDeclinedCount()).sum(), "PROCESSDECLINEDTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInvitationExpireCount()).sum(), "INVITATIONEXPIREDTOTAL",
-                                pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getAgentCount()).sum());
-                pwdvMprReportDtoList.add(reportResponseDtoTotal);
-                reportSearchDtoObj = new ReportSearchDto(strFromDate, strToDate, orgIds, pwdvMprReportDtoList, null);
-                svcSearchResult.setData(reportSearchDtoObj);
-                svcSearchResult.setOutcome(true);
-                svcSearchResult.setMessage("Customer Utilization Report Data generated...");
-            } else {
-                reportSearchDtoObj = new ReportSearchDto(strFromDate, strToDate, orgIds, null, null);
-                svcSearchResult.setData(reportSearchDtoObj);
-                svcSearchResult.setOutcome(false);
-                svcSearchResult.setMessage("NO RECORD FOUND");
-            }
-        } catch (Exception ex) {
-            log.error("Exception occured in getCustomerUtilizationReportData method in ReportServiceImpl-->", ex);
-            svcSearchResult.setData(null);
-            svcSearchResult.setOutcome(false);
-            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
-        }
         return svcSearchResult;
     }
 
     @Override
     public ServiceOutcome<ReportSearchDto> getCustomerUtilizationReportByAgent(ReportSearchDto reportSearchDto) {
         ServiceOutcome<ReportSearchDto> svcSearchResult = new ServiceOutcome<ReportSearchDto>();
-        List<Object[]> resultList = null;
-        ReportSearchDto reportSearchDtoObj = null;
-        try {
-            if (reportSearchDto != null) {
-                Date startDate = format.parse(reportSearchDto.getFromDate() + " 00:00:00");
-                Date endDate = format.parse(reportSearchDto.getToDate() + " 23:59:59");
-                StringBuilder query = new StringBuilder();
-                query.append("select userMaster.user_id ,userMaster.user_first_name , COALESCE(userMaster.user_last_name,'') as lastname , ");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='NEWUPLOAD' OR statusMaster.status_code ='INVALIDUPLOAD') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS newuploadcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='REINVITE') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS reinvitecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='FINALREPORT') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS finalreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PENDINGAPPROVAL') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS intereimreportDeliveredcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONSENT' OR statusMaster.status_code='ITR' OR statusMaster.status_code='EPFO' OR statusMaster.status_code='DIGILOCKER' OR statusMaster.status_code='RELATIVEADDRESS') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS pendingcount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='PROCESSDECLINED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS processDeclinecount,\n");
-                query.append("COUNT( DISTINCT CASE WHEN (statusMaster.status_code ='INVITATIONEXPIRED') AND candidatestatushistory.candidate_status_change_timestamp BETWEEN ?1 AND ?2 THEN candidatestatushistory.candidate_id END) AS invitationExpiredcount\n");
-                query.append("from  t_dgv_user_master userMaster ");
-                query.append("left JOIN t_dgv_candidate_basic candidatebasic ON candidatebasic.created_by =userMaster.user_id  ");
-                query.append("left JOIN t_dgv_candidate_status_history candidatestatushistory ON candidatestatushistory.candidate_id=candidatebasic.candidate_id ");
-                query.append("left JOIN t_dgv_status_master statusMaster ON statusMaster.status_master_id=candidatestatushistory.status_master_id ");
-                query.append("left JOIN t_dgv_role_master roleMaster ON roleMaster.role_id =userMaster.role_id  ");
-                if (reportSearchDto.getAgentIds() != null && reportSearchDto.getAgentIds().size() > 0 && reportSearchDto.getAgentIds().get(0) != 0l) {
-                    query.append("where userMaster.orgainzation_id in (?3) and userMaster.is_user_active = true and roleMaster.role_code ='ROLE_AGENTHR' and userMaster.user_id in (?4) ");
-                    query.append("group by userMaster.user_id order by userMaster.user_first_name ASC; ");
-                    Query squery = entityManager.createNativeQuery(String.valueOf(query));
-                    squery.setParameter(1, startDate);
-                    squery.setParameter(2, endDate);
-                    squery.setParameter(3, reportSearchDto.getOrganizationIds());
-                    squery.setParameter(4, reportSearchDto.getAgentIds());
-                    resultList = squery.getResultList();
-                } else {
-                    query.append("where userMaster.orgainzation_id in (?3) and userMaster.is_user_active = true and roleMaster.role_code ='ROLE_AGENTHR' ");
-                    query.append("group by userMaster.user_id order by userMaster.user_first_name ASC; ");
-                    Query squery = entityManager.createNativeQuery(String.valueOf(query));
-                    squery.setParameter(1, startDate);
-                    squery.setParameter(2, endDate);
-                    squery.setParameter(3, reportSearchDto.getOrganizationIds());
-                    resultList = squery.getResultList();
-                }
-                if (resultList != null && resultList.size() > 0) {
-                    List<ReportResponseDto> pwdvMprReportDtoList = new ArrayList<ReportResponseDto>();
-                    for (Object[] result : resultList) {
 
-                        ReportResponseDto reportResponseDto = new ReportResponseDto(
-                                Long.valueOf(String.valueOf(result[0])), String.valueOf(result[1]) + " " + String.valueOf(result[2]),
-                                Integer.valueOf(String.valueOf(result[3])), "NEWUPLOAD",
-                                Integer.valueOf(String.valueOf(result[4])), "REINVITE",
-                                Integer.valueOf(String.valueOf(result[5])), "FINALREPORT",
-                                Integer.valueOf(String.valueOf(result[6])), "PENDINGAPPROVAL",
-                                Integer.valueOf(String.valueOf(result[7])), "PENDINGNOW",
-                                Integer.valueOf(String.valueOf(result[8])), "PROCESSDECLINED",
-                                Integer.valueOf(String.valueOf(result[9])), "INVITATIONEXPIRED", 0);
-                        pwdvMprReportDtoList.add(reportResponseDto);
-                    }
-                    ReportResponseDto reportResponseDtoTotal = new ReportResponseDto
-                            (0l, "TOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getNewuploadcount()).sum(), "NEWUPLOADTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getReinvitecount()).sum(), "REINVITETOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getFinalreportCount()).sum(), "FINALREPORTTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInterimReportCount()).sum(), "PENDINGAPPROVALTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getPendingCount()).sum(), "PENDINGNOWTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getProcessDeclinedCount()).sum(), "PROCESSDECLINEDTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInvitationExpireCount()).sum(), "INVITATIONEXPIREDTOTAL",
-                                    pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getAgentCount()).sum());
-                    pwdvMprReportDtoList.add(reportResponseDtoTotal);
-                    reportSearchDtoObj = new ReportSearchDto(reportSearchDto.getFromDate(), reportSearchDto.getToDate(), reportSearchDto.getOrganizationIds(), pwdvMprReportDtoList, reportSearchDto.getAgentIds());
-                    svcSearchResult.setData(reportSearchDtoObj);
-                    svcSearchResult.setOutcome(true);
-                    svcSearchResult.setMessage("Customer Utilization Report Data By Agent generated...");
-                } else {
-                    reportSearchDtoObj = new ReportSearchDto(reportSearchDto.getFromDate(), reportSearchDto.getToDate(), reportSearchDto.getOrganizationIds(), null, reportSearchDto.getAgentIds());
-                    svcSearchResult.setData(reportSearchDtoObj);
-                    svcSearchResult.setOutcome(false);
-                    svcSearchResult.setMessage("NO RECORD FOUND");
-                }
-            }
-        } catch (Exception ex) {
-            log.error("Exception occured in getCustomerUtilizationReportByAgent method in ReportServiceImpl-->", ex);
-            svcSearchResult.setData(null);
-            svcSearchResult.setOutcome(false);
-            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
-        }
         return svcSearchResult;
     }
 
     @Override
     public ServiceOutcome<ReportSearchDto> getCanididateDetailsByStatus(ReportSearchDto reportSearchDto) {
         ServiceOutcome<ReportSearchDto> svcSearchResult = new ServiceOutcome<ReportSearchDto>();
-        List<CandidateDetailsForReport> candidateDetailsDtoList = new ArrayList<CandidateDetailsForReport>();
-        CandidateEmailStatus candidateEmailStatus = null;
-        List<CandidateStatus> candidateStatusList = null;
-        CandidateDetailsForReport candidateDto = null;
-        List<Object[]> resultList = null;
-        StringBuilder query = null;
-        Query squery = null;
-        try {
-            if (StringUtils.isNotBlank(reportSearchDto.getStatusCode()) && StringUtils.isNotBlank(reportSearchDto.getFromDate()) && StringUtils.isNotBlank(reportSearchDto.getToDate())
-                    && reportSearchDto.getOrganizationIds() != null && !reportSearchDto.getOrganizationIds().isEmpty()) {
-                Date startDate = format.parse(reportSearchDto.getFromDate() + " 00:00:00");
-                Date endDate = format.parse(reportSearchDto.getToDate() + " 23:59:59");
-                List<String> statusList = null;
-                if (reportSearchDto.getStatusCode().equals("NEWUPLOAD")) {
-                    if (reportSearchDto.getAgentIds() != null && !reportSearchDto.getAgentIds().isEmpty()) {
-                        candidateStatusList = candidateStatusRepository.findAllByCreatedOnBetweenAndCandidateOrganizationOrganizationIdInAndCreatedByUserIdIn(startDate, endDate, reportSearchDto.getOrganizationIds(), reportSearchDto.getAgentIds());
-                    } else {
-                        candidateStatusList = candidateStatusRepository.findAllByCreatedOnBetweenAndCandidateOrganizationOrganizationIdIn(startDate, endDate, reportSearchDto.getOrganizationIds());
-                    }
-                    if (!candidateStatusList.isEmpty()) {
-                        for (CandidateStatus candidateStatus : candidateStatusList) {
-                            candidateDto = this.modelMapper.map(candidateStatus.getCandidate(), CandidateDetailsForReport.class);
-                            candidateEmailStatus = candidateEmailStatusRepository.findByCandidateCandidateCode(candidateStatus.getCandidate().getCandidateCode());
-                            candidateDto.setDateOfEmailInvite(candidateEmailStatus != null && candidateEmailStatus.getDateOfEmailInvite() != null ? candidateEmailStatus.getDateOfEmailInvite().toString() : null);
-                            candidateDto.setStatusName(candidateStatus.getStatusMaster().getStatusName());
-                            candidateDto.setStatusDate(candidateStatus.getLastUpdatedOn() != null ? candidateStatus.getLastUpdatedOn().toString() : null);
-                            candidateDetailsDtoList.add(candidateDto);
-                        }
-                    }
-                }
-                if (reportSearchDto.getStatusCode().equals("REINVITE") || reportSearchDto.getStatusCode().equals("FINALREPORT") || reportSearchDto.getStatusCode().equals("PENDINGAPPROVAL")
-                        || reportSearchDto.getStatusCode().equals("PROCESSDECLINED") || reportSearchDto.getStatusCode().equals("INVITATIONEXPIRED") || reportSearchDto.getStatusCode().equals("PENDINGNOW")) {
-                    query = new StringBuilder();
-                    query.append("select distinct cb.candidate_id ,um.user_first_name ,COALESCE(um.user_last_name,'') as lastname , ");
-                    query.append("cb.candidate_name ,cb.contact_number ,cb.email_id,coalesce(cb.pan_number,'') as pannumber, ");
-                    query.append("cb.applicant_id ,cb.candidate_code ,es.date_of_email_invite,cb.created_on, ");
-                    query.append("coalesce(cb.experience_in_month,0) as noe, t.currentstatusdate, ");
-                    query.append("tdcs.color_id ,sm.status_name ,t.invitationexpiredcount,t.reinvitecount,tdcs.last_updated_on as statusdate ");
-                    query.append("from  t_dgv_candidate_basic cb, ");
-                    query.append("t_dgv_candidate_status tdcs,t_dgv_status_master sm,t_dgv_user_master um, ");
-                    query.append("t_dgv_candidate_email_status es , ");
-                    query.append("( ");
-                    query.append("SELECT csh.candidate_id,count(case when sm.status_code ='INVITATIONEXPIRED' then 1  END) as invitationexpiredcount, ");
-                    query.append("count(case when sm.status_code ='REINVITE' then 1 END) as reinvitecount, ");
-                    query.append("max(case when sm.status_code in (?4) then created_on END) as currentstatusdate ");
-                    query.append("FROM t_dgv_candidate_status_history csh ");
-                    query.append("left JOIN t_dgv_status_master sm ON sm.status_master_id=csh.status_master_id ");
-                    query.append("where  csh.created_on  between ?1 and ?2 ");
-                    query.append("and sm.status_code in (?4) ");
-                    query.append("group by csh.candidate_id ) t ");
-                    query.append("where ");
-                    query.append(" cb.candidate_id=t.candidate_id ");
-                    query.append("and sm.status_master_id=tdcs.status_master_id ");
-                    query.append("and um.user_id =cb.created_by  ");
-                    query.append("and es.candidate_id =cb.candidate_id  ");
-                    query.append("and tdcs.candidate_id=cb.candidate_id ");
-                    query.append("and cb.organization_id in (?3)  ");
-                    if (reportSearchDto.getAgentIds() != null && !reportSearchDto.getAgentIds().isEmpty()) {
-                        query.append("and um.user_id in (?5)  ");
-                    }
-                    squery = entityManager.createNativeQuery(String.valueOf(query));
-                    squery.setParameter(1, startDate);
-                    squery.setParameter(2, endDate);
-                    squery.setParameter(3, reportSearchDto.getOrganizationIds());
-                    if (reportSearchDto.getStatusCode().equals("PENDINGNOW")) {
-                        statusList = new ArrayList<>();
-                        Collections.addAll(statusList, "INVITATIONSENT", "ITR", "EPFO", "DIGILOCKER", "RELATIVEADDRESS");
-                    } else {
-                        statusList = new ArrayList<>();
-                        Collections.addAll(statusList, reportSearchDto.getStatusCode());
-                    }
-                    squery.setParameter(4, statusList);
-                    if (reportSearchDto.getAgentIds() != null && !reportSearchDto.getAgentIds().isEmpty()) {
-                        squery.setParameter(5, reportSearchDto.getAgentIds());
-                    }
-                    resultList = squery.getResultList();
-                    if (resultList != null && resultList.size() > 0) {
-                        for (Object[] result : resultList) {
-                            candidateDto = new CandidateDetailsForReport();
-                            candidateDto.setCreatedByUserFirstName(String.valueOf(result[1]));
-                            candidateDto.setCreatedByUserLastName(String.valueOf(result[2]));
-                            candidateDto.setCandidateName(String.valueOf(result[3]));
-                            candidateDto.setContactNumber(String.valueOf(result[4]));
-                            candidateDto.setEmailId(String.valueOf(result[5]));
-                            candidateDto.setPanNumber(String.valueOf(result[6]));
-                            candidateDto.setApplicantId(String.valueOf(result[7]));
-                            candidateDto.setCandidateCode(String.valueOf(result[8]));
-                            candidateDto.setDateOfEmailInvite(String.valueOf(result[9]));
-                            candidateDto.setCreatedOn(String.valueOf(result[10]));
-                            candidateDto.setExperienceInMonth(Integer.valueOf(String.valueOf(result[11])));
-                            candidateDto.setCurrentStatusDate(String.valueOf(result[12]));
-                            candidateDto.setColorName(result[13] != null ? colorRepository.findById(Long.valueOf(String.valueOf(result[13]))).get().getColorName() : "NA");
-                            candidateDto.setStatusName(String.valueOf(result[14]));
-                            candidateDto.setNumberofexpiredCount(Integer.valueOf(String.valueOf(result[15])));
-                            candidateDto.setReinviteCount(Integer.valueOf(String.valueOf(result[16])));
-                            candidateDto.setStatusDate(String.valueOf(result[17]));
-                            candidateDetailsDtoList.add(candidateDto);
-                        }
-                    }
-                }
-            }
-            ReportSearchDto reportSearchDtoObj = new ReportSearchDto();
-            reportSearchDtoObj.setFromDate(reportSearchDto.getFromDate());
-            reportSearchDtoObj.setToDate(reportSearchDto.getToDate());
-            reportSearchDtoObj.setStatusCode(reportSearchDto.getStatusCode());
-            reportSearchDtoObj.setOrganizationIds(reportSearchDto.getOrganizationIds());
-            if (reportSearchDto.getOrganizationIds() != null && reportSearchDto.getOrganizationIds().get(0) != 0) {
-                reportSearchDtoObj.setOrganizationName(organizationRepository.findById(reportSearchDto.getOrganizationIds().get(0)).get().getOrganizationName());
-            }
-            List<CandidateDetailsForReport> sortedList = candidateDetailsDtoList.stream()
-                    .sorted((o1, o2) -> o1.getCandidateName().compareTo(o2.getCandidateName()))
-                    .collect(Collectors.toList());
-            reportSearchDtoObj.setCandidateDetailsDto(sortedList);
-            svcSearchResult.setData(reportSearchDtoObj);
-            svcSearchResult.setOutcome(true);
-            svcSearchResult.setMessage("SUCCESS");
-        } catch (Exception ex) {
-            log.error("Exception occured in getCanididateDetailsByStatus method in ReportServiceImpl-->", ex);
-            svcSearchResult.setData(null);
-            svcSearchResult.setOutcome(false);
-            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
-        }
+
         return svcSearchResult;
     }
 
@@ -646,11 +284,11 @@ public class ReportServiceImpl implements ReportService {
                         candidateDetailsForReport.setCandidateUan(uanNumber);
 
 
-                        CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidate.getCandidate().getCandidateCode(), "PAN");
-                        if (candidateIdItemPan != null && candidateIdItemPan.getIdHolder() != null) {
-                            candidateDetailsForReport.setPanName(candidateIdItemPan.getIdHolder());
-                            candidateDetailsForReport.setPanDob(candidateIdItemPan.getIdHolderDob());
-                        }
+//                        CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidate.getCandidate().getCandidateCode(), "PAN");
+//                        if (candidateIdItemPan != null && candidateIdItemPan.getIdHolder() != null) {
+//                            candidateDetailsForReport.setPanName(candidateIdItemPan.getIdHolder());
+//                            candidateDetailsForReport.setPanDob(candidateIdItemPan.getIdHolderDob());
+//                        }
                         List<EpfoData> uanList = epfoDataRepository.findAllByCandidateCandidateId(candidate.getCandidate().getCandidateId());
                         String uanName = uanList.parallelStream().map(name -> name.toString()).collect(Collectors.joining("/"));
                         for (EpfoData uan : uanList) {
@@ -1136,7 +774,7 @@ public class ReportServiceImpl implements ReportService {
                 mergedFile.delete();
                 report.delete();
                 return pdfUrl;
-            } catch (FileNotFoundException | MessagingException | UnsupportedEncodingException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;
@@ -1287,5 +925,466 @@ public class ReportServiceImpl implements ReportService {
         return (candidateStatusEnums.contains(CandidateStatusEnum.ITR));
     }
 
+    @Override
+    public ServiceOutcome<ReportSearchDto> generateConventionalUtilizationReport(ReportSearchDto reportSearchDto) {
+
+        ServiceOutcome<ReportSearchDto> svcSearchResult = new ServiceOutcome<ReportSearchDto>();
+        List<Object[]> resultList = null;
+        User user = SecurityHelper.getCurrentUser();
+        String strToDate = "";
+        String strFromDate = "";
+        List<Long> orgIds = new ArrayList<Long>();
+        List<Long> agentIds = new ArrayList<Long>();
+        ReportSearchDto reportSearchDtoObj = null;
+        CandidateDetailsForReport candidateDto = null;
+        ReportResponseDto reportResponseDto_vendor = null;
+        try {
+            if (reportSearchDto == null) {
+                strToDate = ApplicationDateUtils.getStringTodayAsDDMMYYYY();
+                strFromDate = ApplicationDateUtils
+                        .subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 30);
+//				if(user.getRole().getRoleCode().equals("ROLE_CBADMIN")) {
+//					orgIds.add(0, 0l);
+//				}else {
+//					Long orgIdLong = user.getOrganization().getOrganizationId();
+//					orgIds.add(orgIdLong);
+//					reportSearchDto=new ReportSearchDto();
+//					reportSearchDto.setOrganizationIds(orgIds);
+//				}
+            } else {
+                strToDate = reportSearchDto.getToDate();
+                strFromDate = reportSearchDto.getFromDate();
+                orgIds.addAll(reportSearchDto.getOrganizationIds());
+                if (reportSearchDto.getAgentIds() != null) {
+                    agentIds.addAll(reportSearchDto.getAgentIds());
+                } else {
+
+                }
+
+            }
+            Date startDate = format.parse(strFromDate + " 00:00:00");
+            Date endDate = format.parse(strToDate + " 23:59:59");
+
+            if (reportSearchDto != null && reportSearchDto.getOrganizationIds() != null
+                    && reportSearchDto.getOrganizationIds().size() > 0
+                    && reportSearchDto.getOrganizationIds().get(0) != 0l) {
+//				query.append(
+//						"select COUNT( " +
+//                                "DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 1 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS clearcount," +
+//                                " COUNT( DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 2 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS inprogresscount, " +
+//                                "COUNT( DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 3 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS insufficientstatuscount," +
+//                                " COUNT( DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 4 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS majordiscrepancystatuscount, " +
+//                                "COUNT( DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 5 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS minordiscrepencystatuscount," +
+//                                " COUNT( DISTINCT CASE WHEN vc.vendor_checkstatus_master_id = 6 and vc.created_at between ?1 and  ?2 THEN vc.vendor_check_id END) AS unabletoverifystatuscount," +
+//                                " org.organization_name as name, org.organization_id as orgId from t_dgv_role_master rm, t_dgv_user_master um, t_dgv_vendor_master_new vm, t_dgv_vendor_checks vc," +
+//                                " t_dgv_organization_master org where org.is_active = 1 and org.organization_id = um.orgainzation_id" +
+//                                " and um.user_id = vm.user_id and vm.vendor_id = vc.vendor_id and org.organization_id in (?3);");
+//				System.out.println(query);
+//				Query squery = entityManager.createNativeQuery(query.toString());
+//				squery.setParameter(1, startDate);
+//				squery.setParameter(2, endDate);
+//				squery.setParameter(3, reportSearchDto.getOrganizationIds());
+
+//				resultList = squery.getResultList();
+            } else {
+
+
+                StringBuilder query = new StringBuilder();
+                // Create the query
+
+                query.append("SELECT ");
+                query.append("CASE ");
+                query.append("WHEN lh.check_name LIKE '%IDENTITY CHECK - PAN CARD%' THEN 'IDENTITY CHECK - PAN CARD' ");
+                query.append("WHEN lh.check_name LIKE '%IDENTITY CHECK - AADHAR CARD%' THEN 'IDENTITY CHECK - AADHAR CARD' ");
+                query.append("WHEN lh.check_name LIKE '%IDENTITY CHECK - DRIVING LICENCE%' THEN 'IDENTITY CHECK - DRIVING LICENCE' ");
+                query.append("WHEN lh.check_name LIKE '%IDENTITY CHECK - PASSPORT%' THEN 'IDENTITY CHECK - PASSPORT' ");
+                query.append("WHEN lh.check_name LIKE '%PROFESSIONAL REFERENCE%' THEN 'PROFESSIONAL REFERENCE' ");
+                query.append("WHEN lh.check_name LIKE '%DRUG CHECK%' THEN 'DRUG CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%GLOBAL DATABASE CHECK%' THEN 'GLOBAL DATABASE CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%OFAC CHECK%' THEN 'OFAC CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%CV VALIDATION CHECK%' THEN 'CV VALIDATION CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%GAP ANALYSIS%' THEN 'GAP ANALYSIS' ");
+                query.append("WHEN lh.check_name LIKE '%Directorship Check%' THEN 'Directorship Check' ");
+                query.append("WHEN lh.check_name LIKE '%Overlap Check%' THEN 'Overlap Check' ");
+                query.append("WHEN lh.check_name LIKE '%EDUCATION%' THEN 'EDUCATION' ");
+                query.append("WHEN lh.check_name LIKE '%LEGAL RIGHT TO WORK%' THEN 'LEGAL RIGHT TO WORK' ");
+                query.append("WHEN lh.check_name LIKE '%ADDRESS CHECK%' THEN 'ADDRESS CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%EMPLOYMENT CHECK%' THEN 'EMPLOYMENT CHECK' ");
+                query.append("WHEN lh.check_name LIKE '%CRIMINAL CHECK%' THEN 'CRIMINAL CHECK' ");
+                query.append("ELSE lh.check_name ");
+                query.append("END AS grouped_check_name, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'CLEAR' THEN 1 END) AS clear_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'INPROGRESS' THEN 1 END) AS inprogress_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'UNABLETOVERIFY' THEN 1 END) AS UNABLETOVERIFY_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'MAJORDISCREPANCY' THEN 1 END) AS MAJORDISCREPANCY_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'MINORDISCREPANCY' THEN 1 END) AS MINORDISCREPANCY_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'NEWUPLOAD' THEN 1 END) AS NEWUPLOAD_count, ");
+                query.append("COUNT(CASE WHEN lh.check_status = 'INSUFFICIENCY' THEN 1 END) AS INSUFFICIENCY_count, ");
+                query.append("COUNT(*) AS total_count ");
+                query.append("FROM ");
+                query.append("t_dgv_conventional_licheck_history lh ");
+                query.append("JOIN ");
+                query.append("(SELECT ");
+                query.append("check_unique_id, ");
+                query.append("MAX(created_on) as latest_created_on ");
+                query.append("FROM ");
+                query.append("t_dgv_conventional_licheck_history ");
+                query.append("WHERE ");
+                query.append("created_on BETWEEN ?1 AND ?2 ");
+                query.append("GROUP BY ");
+                query.append("check_unique_id) lch ");
+                query.append("ON ");
+                query.append("lh.check_unique_id = lch.check_unique_id ");
+                query.append("AND lh.created_on = lch.latest_created_on ");
+                query.append("GROUP BY ");
+                query.append("grouped_check_name;");
+
+
+// Create the native query
+                Query squery = entityManager.createNativeQuery(query.toString());
+
+// Set the parameters
+                squery.setParameter(1, startDate);
+                squery.setParameter(2, endDate);
+
+// Execute the query
+                resultList = squery.getResultList();
+            }
+            if (resultList != null && resultList.size() > 0) {
+                List<ReportResponseDto> pwdvMprReportDtoList = new ArrayList<ReportResponseDto>();
+                for (Object[] result : resultList) {
+
+                    ReportResponseDto reportResponseDto = new ReportResponseDto(Long.valueOf(String.valueOf(result[1])),
+                            String.valueOf(result[0]), Integer.valueOf(String.valueOf(result[1])), "Clear",
+                            Integer.valueOf(String.valueOf(result[2])), "InProgress",
+                            Integer.valueOf(String.valueOf(result[3])), "InSufficiency",
+                            Integer.valueOf(String.valueOf(result[4])), "MajorDiscrepancy",
+                            Integer.valueOf(String.valueOf(result[5])), "MinorDiscrepancy",
+                            Integer.valueOf(String.valueOf(result[6])), "UnableToVerify",
+                            Integer.valueOf(String.valueOf(result[7])), "NewUpload", 0);
+                    pwdvMprReportDtoList.add(reportResponseDto);
+                }
+                ReportResponseDto reportResponseDtoTotal = new ReportResponseDto(0l, "TOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getNewuploadcount()).sum(),
+                        "NEWUPLOADTOTAL", pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getReinvitecount()).sum(),
+                        "REINVITETOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getFinalreportCount()).sum(),
+                        "FINALREPORTTOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInterimReportCount()).sum(),
+                        "PENDINGAPPROVALTOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getPendingCount()).sum(), "PENDINGNOWTOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getProcessDeclinedCount()).sum(),
+                        "PROCESSDECLINEDTOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getInvitationExpireCount()).sum(),
+                        "INVITATIONEXPIREDTOTAL",
+                        pwdvMprReportDtoList.stream().mapToInt(pojo -> pojo.getAgentCount()).sum());
+                pwdvMprReportDtoList.add(reportResponseDtoTotal);
+                reportSearchDtoObj = new ReportSearchDto(strFromDate, strToDate, orgIds, pwdvMprReportDtoList,
+                        agentIds);
+
+                svcSearchResult.setData(reportSearchDtoObj);
+                svcSearchResult.setOutcome(true);
+                svcSearchResult.setMessage("Conventional Utilization Report Data generated...");
+            } else {
+                reportSearchDtoObj = new ReportSearchDto(strFromDate, strToDate, orgIds, null, null);
+                svcSearchResult.setData(reportSearchDtoObj);
+                svcSearchResult.setOutcome(true);
+                svcSearchResult.setMessage("NO RECORD FOUND");
+            }
+        } catch (Exception ex) {
+            log.error("Exception occured in getVendorUtilizationReportData method in ReportServiceImpl-->", ex);
+            svcSearchResult.setData(null);
+            svcSearchResult.setOutcome(false);
+            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
+        }
+
+        return svcSearchResult;
+    }
+
+    @Override
+    public ServiceOutcome<List<CURReportDto>> getVendorDetailsByStatus(VendorSearchDto vendorStatusmasterId) {
+        ServiceOutcome<List<CURReportDto>> result = new ServiceOutcome<List<CURReportDto>>();
+        List<CURReportDto> curReportDtoList = new ArrayList<>();
+
+        try {
+//				curReportDtoList = vendorCheckStatusMasterRepository.getVendorChecks(vendorCheckStatusMasterId);
+
+//				List<Source> allSources = sourceRepository.findAll();
+//		        allSources = allSources.stream().filter(p -> p.getSourceId() != 3l).collect(Collectors.toList());
+//		        for (Source source : allSources) { 
+//		            List<ReportUtilizationVendorDto> allVendorCandidateAndSourceId = vendorChecksRepository.findAllVendorCandidateAndSourceId(source.getSourceId());
+
+//		            for (ReportUtilizationVendorDto reportUtilizationVendorDto : allVendorCandidateAndSourceId) {
+//		                Long candidateId = reportUtilizationVendorDto.getCandidateId();
+//		                Long vendorId = reportUtilizationVendorDto.getVendorId();
+
+//		                List<VendorChecks> byCandidateIdANdVendorIdAndCandidateId = vendorChecksRepository.findByCandidateIdANdVendorIdAndCandidateId(vendorId, candidateId, source.getSourceId());
+            String strToDate = "";
+            String strFromDate = "";
+            if (vendorStatusmasterId.getFromDate().isEmpty() || vendorStatusmasterId.getToDate().isEmpty()) {
+                strToDate = ApplicationDateUtils.getStringTodayAsDDMMYYYY();
+                strFromDate = ApplicationDateUtils
+                        .subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 30);
+            } else {
+                strFromDate = vendorStatusmasterId.getFromDate();
+                strToDate = vendorStatusmasterId.getToDate();
+            }
+
+            Date startDate = format.parse(strFromDate + " 00:00:00");
+            Date endDate = format.parse(strToDate + " 23:59:59");
+
+            List<VendorChecks> byCandidateIdANdVendorIdAndCandidateId = vendorChecksRepository.findByCheckCode(startDate, endDate, vendorStatusmasterId.getStatusCode() + "%");
+            for (VendorChecks vendorChecks : byCandidateIdANdVendorIdAndCandidateId) {
+                CURReportDto curReportObj = new CURReportDto();
+                User user = userRepository.findById(vendorChecks.getVendorId()).get();
+
+                List<Date> resultList = null;
+                StringBuilder query = new StringBuilder();
+                query.append(
+                        "select max(history.created_on) from\r\n"
+                                + "    t_dgv_vendor_checks vc\r\n"
+                                + "	LEFT JOIN t_dgv_conventional_vendorchecks_to_perform cvp ON vc.licheckid = cvp.id\r\n"
+                                + "	LEFT JOIN t_dgv_conventional_licheck_history history ON cvp.check_unique_id = history.check_unique_id\r\n"
+                                + "where\r\n"
+                                + "	vc.licheckid = ?1 ;");
+
+                Query squery = entityManager.createNativeQuery(query.toString());
+                squery.setParameter(1, vendorChecks.getLicheckId());
+
+                resultList = squery.getResultList();
+
+                if (resultList != null && resultList.size() > 0) {
+                    for (Date response : resultList) {
+                        if (response != null) {
+                            Date inputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").parse(response.toString());
+                            curReportObj.setCheckDate(new SimpleDateFormat("dd/MM/yyyy").format(inputDate));
+                        }
+                    }
+                }
+
+                curReportObj.setVendorName((user.getUserFirstName() != null) ? user.getUserFirstName() : "NA");
+                if (vendorChecks.getCreatedBy() != null) {
+                    User caseInitatedBy = userRepository.findById(vendorChecks.getCreatedBy().getUserId()).get();
+                    curReportObj.setCaseInitiatedBy(caseInitatedBy.getUserName() != null ? caseInitatedBy.getUserName() : "NA");
+                }
+
+                ConventionalVendorCandidatesSubmitted conventionalVendorCandidatesSubmitted = conventionalCandidatesSubmittedRepository.findByRequestId(String.valueOf(vendorChecks.getCandidate().getConventionalRequestId()));
+                curReportObj.setRefNo(conventionalVendorCandidatesSubmitted != null ? conventionalVendorCandidatesSubmitted.getApplicantId() : 0l);
+                curReportObj.setCandidateName((conventionalVendorCandidatesSubmitted != null) ? conventionalVendorCandidatesSubmitted.getName() : "NA");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                curReportObj.setCaseAssignedDate((vendorChecks.getCreatedOn() != null) ? dateFormat.format(vendorChecks.getCreatedOn()) : dateFormat.format(new Date()));
+                curReportObj.setReportStatus((conventionalVendorCandidatesSubmitted != null) ? conventionalVendorCandidatesSubmitted.getStatus().getStatusName() : "NA");
+                curReportObj.setDetailName((vendorChecks.getSource() != null) ? vendorChecks.getSource().getSourceName() : "NA");
+                curReportObj.setQty((byCandidateIdANdVendorIdAndCandidateId != null) ? byCandidateIdANdVendorIdAndCandidateId.size() : 0l);
+                curReportObj.setColorCode((vendorChecks.getVendorCheckStatusMaster() != null) ? vendorChecks.getVendorCheckStatusMaster().getCheckStatusCode() : "NA");
+
+                List<VendorMasterNew> byUserId = vendorMasterNewRepository.findByUserId(vendorChecks.getVendorId());
+                if (byUserId.isEmpty() == false) {
+                    byUserId.forEach(data -> {
+                        curReportObj.setPricePerUnit((data != null) ? data.getRatePerItem() : 4l);
+                        if (byCandidateIdANdVendorIdAndCandidateId.isEmpty() == false) {
+                            curReportObj.setTotalAmount((data != null) ? byCandidateIdANdVendorIdAndCandidateId.size() * data.getRatePerItem() : 0);
+                        }
+                    });
+                }
+
+                curReportObj.setAadharNumber(vendorChecks.getCandidate().getAadharNumber());
+                curReportObj.setPanNumber(vendorChecks.getCandidate().getPanNumber());
+                curReportObj.setDateOfBirth(vendorChecks.getCandidate().getDateOfBirth());
+                curReportObj.setFatherName(vendorChecks.getCandidate().getAadharFatherName());
+                curReportObj.setGender(vendorChecks.getCandidate().getAadharGender());
+                curReportObj.setContactNumber(vendorChecks.getCandidate().getContactNumber());
+
+                int i = 1;
+                List<CandidateCafEducation> cafEdu = candidateCafEducationRepository.findAllByCandidateCandidateId(vendorChecks.getCandidate().getCandidateId());
+                for (CandidateCafEducation candidateCafEducation : cafEdu) {
+                    List<ConventionalCandidateCafEducation> conventionalCafEdu = conventionalCafCandidateEducationRepository.findByCandidateCafEducationId(candidateCafEducation.getCandidateCafEducationId());
+                    if (i == 1) {
+                        curReportObj.setUniv1(candidateCafEducation.getBoardOrUniversityName());
+//		                    		curReportObj.setCourseName1(candidateCafEducation.getCourseName());
+                        if (candidateCafEducation.getColor() != null)
+                            curReportObj.setResult1(candidateCafEducation.getColor().getColorCode());
+                        curReportObj.setYop1(candidateCafEducation.getYearOfPassing());
+                        if (conventionalCafEdu.size() > 0)
+                            curReportObj.setEndDate1(new SimpleDateFormat("dd/MM/yyyy").format(conventionalCafEdu.get(0).getEndDate()));
+                    }
+                    if (i == 2) {
+                        curReportObj.setUniv2(candidateCafEducation.getBoardOrUniversityName());
+//		                    		curReportObj.setCourseName2(candidateCafEducation.getCourseName());
+                        if (candidateCafEducation.getColor() != null)
+                            curReportObj.setResult2(candidateCafEducation.getColor().getColorCode());
+                        curReportObj.setYop2(candidateCafEducation.getYearOfPassing());
+                        if (conventionalCafEdu.size() > 0)
+                            curReportObj.setEndDate2(new SimpleDateFormat("dd/MM/yyyy").format(conventionalCafEdu.get(0).getEndDate()));
+                    }
+                    if (i == 3) {
+                        curReportObj.setUniv3(candidateCafEducation.getBoardOrUniversityName());
+//		                    		curReportObj.setCourseName3(candidateCafEducation.getCourseName());
+                        if (candidateCafEducation.getColor() != null)
+                            curReportObj.setResult3(candidateCafEducation.getColor().getColorCode());
+                        curReportObj.setYop3(candidateCafEducation.getYearOfPassing());
+                        if (conventionalCafEdu.size() > 0)
+                            curReportObj.setEndDate3(new SimpleDateFormat("dd/MM/yyyy").format(conventionalCafEdu.get(0).getEndDate()));
+                    }
+
+                    i++;
+                }
+
+                curReportDtoList.add(curReportObj);
+            }
+
+//		            }
+//		        }
+
+            result.setData(curReportDtoList);
+            result.setOutcome(true);
+            result.setMessage("CUR report data fetching successful");
+        } catch (Exception e) {
+            result.setData(null);
+            result.setOutcome(false);
+            result.setMessage("exception in cur report generation " + e.getMessage());
+        }
+
+        return result;
+    }
+
+//	@Override
+//	public ServiceOutcome<VendorSearchDto> getVendorDetailsByStatus(VendorSearchDto reportSearchDto) {
+//		ServiceOutcome<VendorSearchDto> svcSearchResult = new ServiceOutcome<VendorSearchDto>();
+//		List<CandidateDetailsForReport> candidateDetailsDtoList = new ArrayList<CandidateDetailsForReport>();
+//		CandidateEmailStatus candidateEmailStatus = null;
+//		List<CandidateStatus> candidateStatusList = null;
+//		CandidateDetailsForReport candidateDto = null;
+//		List<VendorChecksDto> vendorDetailsDtoList = new ArrayList<VendorChecksDto>();
+//		VendorChecksDto vendorChecksDto = null;
+//		List<Object[]> resultList = null;
+//		StringBuilder query = null;
+//		Query squery = null;
+//		Integer VendorStatusmasterId = null;
+//		try {
+//			if (StringUtils.isNotBlank(reportSearchDto.getStatusCode())
+//					&& StringUtils.isNotBlank(reportSearchDto.getFromDate())
+//					&& StringUtils.isNotBlank(reportSearchDto.getToDate())
+//					&& reportSearchDto.getOrganizationIds() != null
+//					&& !reportSearchDto.getOrganizationIds().isEmpty()) {
+//				Date startDate = format.parse(reportSearchDto.getFromDate() + " 00:00:00");
+//				Date endDate = format.parse(reportSearchDto.getToDate() + " 23:59:59");
+//				List<String> statusList = null;
+//				if (reportSearchDto.getStatusCode().equals("NEWUPLOAD")
+//						|| reportSearchDto.getStatusCode().equals("REINVITE")
+//						|| reportSearchDto.getStatusCode().equals("FINALREPORT")
+//						|| reportSearchDto.getStatusCode().equals("PENDINGAPPROVAL")
+//						|| reportSearchDto.getStatusCode().equals("PROCESSDECLINED")
+//						|| reportSearchDto.getStatusCode().equals("INVITATIONEXPIRED")
+//						|| reportSearchDto.getStatusCode().equals("PENDINGNOW")) {
+//					query = new StringBuilder();
+//					if (reportSearchDto.getStatusCode() != null) {
+//						if (reportSearchDto.getStatusCode().equals("NEWUPLOAD")) {
+//							VendorStatusmasterId = 1;
+//						} else if (reportSearchDto.getStatusCode().equals("REINVITE")) {
+//							VendorStatusmasterId = 2;
+//						} else if (reportSearchDto.getStatusCode().equals("FINALREPORT")) {
+//							VendorStatusmasterId = 3;
+//						} else if (reportSearchDto.getStatusCode().equals("PENDINGNOW")) {
+//							VendorStatusmasterId = 4;
+//						} else if (reportSearchDto.getStatusCode().equals("PROCESSDECLINED")) {
+//							VendorStatusmasterId = 5;
+//						} else if (reportSearchDto.getStatusCode().equals("INVITATIONEXPIRED")) {
+//							VendorStatusmasterId = 6;
+//						}
+//					}
+//					query.append(
+//							"select distinct vc.vendor_check_id, vc.candidate_id, vc.created_by, vc.created_at, vc.email_id, vc.expires_on, vc.tat, vc.vendor_id, vc.source_id, vc.Is_proof_uploaded, vc.agent_Uploaded_Document, vc.address, vc.alternate_contact_no, vc.candidate_name, vc.contact_no, vc.date_of_birth, vc.document_name, vc.father_name, vc.type_of_panel, vc.vendor_checkstatus_master_id from t_dgv_role_master rm, t_dgv_user_master um, t_dgv_vendor_master_new vm, t_dgv_vendor_checks vc, t_dgv_organization_master org where vc.vendor_checkstatus_master_id in (?1) and vc.created_at between ?2 and  ?3 AND org.organization_id = 88;");
+//					squery = entityManager.createNativeQuery(query.toString());
+//					squery.setParameter(1, VendorStatusmasterId);
+//					squery.setParameter(2, startDate);
+//					squery.setParameter(3, endDate);
+////						squery.setParameter(4, reportSearchDto.getOrganizationIds());
+//
+////						if(reportSearchDto.getStatusCode().equals("PENDINGNOW")) {
+////							 statusList = new ArrayList<>();
+////							Collections.addAll(statusList, "INVITATIONSENT","ITR","EPFO","DIGILOCKER","RELATIVEADDRESS");
+////						}else {
+////							 statusList = new ArrayList<>();
+////							Collections.addAll(statusList, reportSearchDto.getStatusCode());
+////						}
+////						squery.setParameter(4, statusList);
+////						if(reportSearchDto.getAgentIds()!=null && !reportSearchDto.getAgentIds().isEmpty()) {
+////							squery.setParameter(5, reportSearchDto.getAgentIds());
+////						}
+//					resultList = squery.getResultList();
+//					
+//					if (resultList != null && resultList.size() > 0) {
+//						for (Object[] result : resultList) {
+//							vendorChecksDto = new VendorChecksDto();
+//							vendorChecksDto.setVendor_check_id(String.valueOf(result[0]));
+////								vendorChecksDto.setCandidate_id(result[1]);
+////								vendorChecksDto.setVendor_check_id(String.valueOf(result[2]));
+//							vendorChecksDto.setCreated_at(String.valueOf(result[3]));
+//							vendorChecksDto.setEmail_id(String.valueOf(result[4]));
+////								vendorChecksDto.setExpires_on(String.valueOf(result[5]) ? 1:0);
+////								vendorChecksDto.setTat(null);
+//							vendorChecksDto.setVendor_id(String.valueOf(result[7]));
+//							vendorChecksDto.setSource_id(String.valueOf(result[8]));
+//							vendorChecksDto.setIs_proof_uploaded(String.valueOf(result[9]));
+////								vendorChecksDto.setVendor_check_id(String.valueOf(result[10]));
+//							vendorChecksDto.setAddress(String.valueOf(result[11]));
+//							vendorChecksDto.setAlternate_contact_no(String.valueOf(result[12]));
+//							vendorChecksDto.setCandidate_name(String.valueOf(result[13]));
+//							vendorChecksDto.setContact_no(String.valueOf(result[14]));
+//							vendorChecksDto.setDate_of_birth(String.valueOf(result[15]));
+//							vendorChecksDto.setDocument_name(String.valueOf(result[16]));
+//							vendorChecksDto.setFather_name(String.valueOf(result[17]));
+//							vendorChecksDto.setType_of_panel(String.valueOf(result[18]));
+//							vendorChecksDto.setVendor_checkstatus_master_id(String.valueOf(result[19]));
+//							vendorDetailsDtoList.add(vendorChecksDto);
+//
+////								candidateDto=new CandidateDetailsForReport();
+////								candidateDto.setCreatedByUserFirstName(String.valueOf(result[0]));
+////								candidateDto.setCreatedByUserLastName(String.valueOf(result[2]));
+////								candidateDto.setCandidateName(String.valueOf(result[3]));
+////								candidateDto.setContactNumber(String.valueOf(result[4]));
+////								candidateDto.setEmailId(String.valueOf(result[5]));
+////								candidateDto.setPanNumber(String.valueOf(result[6]));
+////								candidateDto.setApplicantId(String.valueOf(result[7]));
+////								candidateDto.setCandidateCode(String.valueOf(result[8]));
+////								candidateDto.setDateOfEmailInvite(String.valueOf(result[9]));
+////								candidateDto.setCreatedOn(String.valueOf(result[10]));
+////								candidateDto.setExperienceInMonth(Integer.valueOf(String.valueOf(result[11])));
+////								candidateDto.setCurrentStatusDate(String.valueOf(result[12]));
+////								candidateDto.setColorName(result[13]!=null?colorRepository.findById(Long.valueOf(String.valueOf(result[13]))).get().getColorName():"NA");
+////								candidateDto.setStatusName(String.valueOf(result[14]));
+////								candidateDto.setNumberofexpiredCount(Integer.valueOf(String.valueOf(result[15])));
+////								candidateDto.setReinviteCount(Integer.valueOf(String.valueOf(result[16])));
+////								candidateDto.setStatusDate(String.valueOf(result[17]));
+////								candidateDetailsDtoList.add(candidateDto);
+//						}
+//					}
+//				}
+//			}
+//			VendorSearchDto reportSearchDtoObj = new VendorSearchDto();
+//			reportSearchDtoObj.setFromDate(reportSearchDto.getFromDate());
+//			reportSearchDtoObj.setToDate(reportSearchDto.getToDate());
+//			reportSearchDtoObj.setStatusCode(reportSearchDto.getStatusCode());
+//			reportSearchDtoObj.setOrganizationIds(reportSearchDto.getOrganizationIds());
+//			if (reportSearchDto.getOrganizationIds() != null && reportSearchDto.getOrganizationIds().get(0) != 0) {
+//				reportSearchDtoObj.setOrganizationName(organizationRepository
+//						.findById(reportSearchDto.getOrganizationIds().get(0)).get().getOrganizationName());
+//			}
+//			List<VendorChecksDto> sortedList = vendorDetailsDtoList.stream()
+//					.sorted((o1, o2) -> o1.getVendor_check_id().compareTo(o2.getVendor_check_id()))
+//					.collect(Collectors.toList());
+//			reportSearchDtoObj.setCandidateDetailsDto(sortedList);
+//			svcSearchResult.setData(reportSearchDtoObj);
+//			svcSearchResult.setOutcome(true);
+//			svcSearchResult.setMessage("SUCCESS");
+//		} catch (Exception ex) {
+//			log.error("Exception occured in getVendorDetailsByStatus method in ReportServiceImpl-->", ex);
+//			svcSearchResult.setData(null);
+//			svcSearchResult.setOutcome(false);
+//			svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
+//		}
+//		return svcSearchResult;
+//	}
 
 }

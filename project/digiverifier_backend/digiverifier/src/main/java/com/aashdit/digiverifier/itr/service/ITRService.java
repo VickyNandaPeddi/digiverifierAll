@@ -5,6 +5,6 @@ import com.aashdit.digiverifier.itr.dto.ITRDetailsDto;
 
 public interface ITRService {
 
-	ServiceOutcome<String> getITRDetailsFromITRSite(ITRDetailsDto iTRDetails);
+    ServiceOutcome<String> getITRDetailsFromITRSite(ITRDetailsDto iTRDetails);
 
 }

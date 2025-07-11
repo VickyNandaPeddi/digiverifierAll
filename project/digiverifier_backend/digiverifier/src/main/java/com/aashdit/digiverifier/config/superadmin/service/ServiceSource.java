@@ -5,6 +5,6 @@ import com.aashdit.digiverifier.config.superadmin.model.ServiceSourceMaster;
 
 public interface ServiceSource {
 
-	ServiceOutcome<ServiceSourceMaster> getServiceSourceMasterByServiceCode(String statusCode);
+    ServiceOutcome<ServiceSourceMaster> getServiceSourceMasterByServiceCode(String statusCode);
 
 }

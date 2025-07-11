@@ -2,12 +2,11 @@ package com.aashdit.digiverifier.config.candidate.model;
 
 import com.aashdit.digiverifier.config.admin.model.User;
 import com.aashdit.digiverifier.config.superadmin.model.Organization;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.UniqueElements;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -29,7 +28,7 @@ public class Candidate implements Serializable {
     private Long candidateId;
 
     @Column(name = "conventional_candidate_id")
-    private Long conventionalCandidateId;
+    private String conventionalCandidateId;
     @Column(name = "conventional_request_id", unique = true)
     private Long conventionalRequestId;
 
@@ -130,6 +129,9 @@ public class Candidate implements Serializable {
     @ManyToOne
     @JoinColumn(name = "candidate_sample_id")
     private CandidateSampleCsvXlsMaster candidateSampleId;
+
+    private String drivingLicenseNumber;
+    private String passportNumber;
 
 
 //	@OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)

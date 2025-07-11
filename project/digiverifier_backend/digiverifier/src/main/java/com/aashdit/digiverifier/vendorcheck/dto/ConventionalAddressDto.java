@@ -1,29 +1,24 @@
 package com.aashdit.digiverifier.vendorcheck.dto;
 
-import com.aashdit.digiverifier.config.candidate.model.CandidateCafAddress;
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.Date;
 
 @Getter
 @Setter
 public class ConventionalAddressDto {
 
-    private Long Id;
+//    private Long Id;
 
     private String addressType;
 
 
-    private Date stayFromDate;
+    private String stayFromDate;
 
-    private Date stayToDate;
+    private String stayToDate;
 
     private String houseType;
 
-    private String contactInfo;
+//    private String contactInfo;
 
     private String insufficiencyRemarks;
 

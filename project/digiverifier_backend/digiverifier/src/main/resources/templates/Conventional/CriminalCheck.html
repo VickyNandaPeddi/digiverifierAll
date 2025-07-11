@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en-us" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>DigiVerifier Pdf</title>
+    <meta charset="UTF-8"/>
+    <link th:href="${cssPath + '/common.css'}" rel="stylesheet"/>
+    <link th:href="@{https://fonts.googleapis.com/css?family=Calibri:400,700,400,700&display=swap}" rel="stylesheet"/>
+    <style>
+        .table-st {
+            clear: both;
+            width: 100%;
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+          .table-cell {
+            overflow: auto;
+            word-wrap: break-word;
+        }
+        .table-st tr {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+        .table-st tr td {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+            padding: 10px;
+        }
+        .table-st tr td span {
+            margin-left: 5px;
+        }
+        .table-container {
+            page-break-inside: avoid; /* Prevent table from splitting across pages */
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-left {
+            text-align: left;
+        }
+        .blue-bg {
+            background-color: #808080;
+        }
+        .grey-bg {
+            background-color: rgba(49, 119, 235, 0.8);
+        }
+        .black-heading {
+            color: black;
+            font-size: 15px !important;
+            font-weight: 700;
+            font-family: 'Calibri';
+        }
+        .white-heading {
+			color: #FFF;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 15pt;
+        }
+        .black-text {
+            color: black;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 13pt;
+        }
+        .grey-text {
+            color: black;
+            font-family:Calibri, sans-serif;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 12pt;
+        }
+        .white-text {
+            color: #fff;
+            font-weight: 700 !important;;
+            font-size: 13px;
+            font-family: 'Calibri';
+        }
+        .line-break {
+            display: block;
+            height: 15px;
+        }
+        .green-status {
+            margin: 0px;
+            color: #008000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .amber-status {
+            margin: 0px;
+            color: #ffA500;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .red-status {
+            margin: 0px;
+            color: #ff0000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .invalid-status {
+            margin: 0px;
+            color: #000000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+        .black-box {
+            border: 1px solid black;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .color-container {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .box {
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            background-color: transparent; /* Set the desired background color */
+            display: inline-block;
+        }
+        .red {
+            background-color: red;
+        }
+        .green {
+            background-color: green;
+        }
+        .amber {
+            background-color: #ffA500;;
+        }
+        .yellow {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body style="background-color:#fff;padding:0px;margin:0px;position:relative;font-family: 'Calibri', sans-serif;color:#666666;">
+<section class="wrapper" style="width:100%;margin:0 auto;height:80%;">
+    <!--  CRIMINAL checks with proofs starts-->
+    <div th:each="vendorUploadChecks : ${root.vendorProofDetails}">
+        <div th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}">
+            <div th:if="${#strings.contains(vendorsourcename.sourceName, 'CRIMINAL')}">
+                <div class="table-container" th:if="${not #lists.isEmpty(root.criminalCheckList)}">
+                    <!--table  forcriminal check-->
+                    <th:block th:each="entry : ${root.criminalCheckList}">
+                        <!-- Check conditions for adding the table -->
+                        <th:block
+                                th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key)) and (not #lists.isEmpty(entry.value.civilProceedingList) or not #lists.isEmpty(entry.value.criminalProceedingList))}">
+                            <div class="text-center mb-3">
+                                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                    <b th:text="${entry.key}"></b>
+                                </span>
+                            </div>
+                            <span class="line-break"></span>
+                            <table class="table-st" border="0">
+                                <!-- Table for Civil Proceedings -->
+                                <tr>
+                                    <td class="grey-bg text-left white-heading" colspan="5"
+                                        style="padding: 3px;">Civil Proceedings
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="grey-text text-left" style="padding: 3px">Includes
+                                        Original
+                                        Suit,
+                                        Miscellaneous Suit, Execution and Arbitration Case
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="black-text text-left" style="width: 30%; padding: 5px;">
+                                        Check Status
+                                    </td>
+                                    <td colspan="4" class="grey-bg text-center white-heading"
+                                        style="width: 70%; padding: 5px;"   th:style="${vendorsourcename.checkStatus.equalsIgnoreCase('CLEAR') ? 'background-color: #74B72E'
+										        : vendorsourcename.checkStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'background-color: orange'
+										        : vendorsourcename.checkStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'background-color: yellow'
+										        : (vendorsourcename.checkStatus.equalsIgnoreCase('MINORDISCREPANCY') or vendorsourcename.checkStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'background-color: rgba(226, 29, 68)'
+										        : ''}">
+
+                                          <span class="black-text" th:text="${vendorsourcename.checkStatus.equalsIgnoreCase('CLEAR') ? 'GREEN'
+										        : vendorsourcename.checkStatus.equalsIgnoreCase('UNABLETOVERIFY') ? 'AMBER'
+										        : vendorsourcename.checkStatus.equalsIgnoreCase('INSUFFICIENCY') ? 'YELLOW'
+										        : (vendorsourcename.checkStatus.equalsIgnoreCase('MINORDISCREPANCY') or vendorsourcename.checkStatus.equalsIgnoreCase('MAJORDISCREPANCY')) ? 'RED'
+										        : vendorsourcename.checkStatus}">
+										    </span>
+                                    </td>
+                                </tr>
+                                <tr class="grey-bg text-center white-heading">
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Date of
+                                        Search
+                                    </td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Court</td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Jurisdiction
+                                    </td>
+                                    <td class="white-heading" style="width: 25%; padding: 3px">Name of the
+                                        Court
+                                    </td>
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Result</td>
+                                </tr>
+                                <tr class="text-center" th:each="proceeding : ${entry.value.civilProceedingList}">
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.dateOfSearch}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.court}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.jurisdiction}"></td>
+                                    <td class="grey-text text-center" style="width: 25%; padding: 3px"
+                                        th:text="${proceeding.nameOfTheCourt}"></td>
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.result}"></td>
+                                </tr>
+                            </table>
+                            <span class="line-break"></span>
+                            <table class="table-st" border="0">
+                                <!-- Table for Criminal Proceedings -->
+                                <tr>
+                                    <td class="grey-bg text-left white-heading" colspan="5"
+                                        style="padding: 3px;">Criminal Proceedings
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="grey-text text-left" style="padding: 3px">Includes
+                                        Criminal
+                                        Petitions,
+                                        Criminal Appeal, Sessions Case, Special Sessions Case, Criminal Miscellaneous
+                                        Petition, and Criminal Revision Appeal
+                                    </td>
+                                </tr>
+                                <tr class="grey-bg text-center white-heading">
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Date of
+                                        Search
+                                    </td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">Court</td>
+                                    <td class="white-heading" style="width: 15%; padding: 3px">
+                                        Jurisdiction
+                                    </td>
+                                    <td class="white-heading" style="width: 25%; padding: 3px">Name of the
+                                        Court
+                                    </td>
+                                    <td class="white-heading" style="width: 20%; padding: 3px">Result</td>
+                                </tr>
+                                <tr class="text-center" th:each="proceeding : ${entry.value.criminalProceedingList}">
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.dateOfSearch}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.court}"></td>
+                                    <td class="grey-text text-center" style="width: 15%; padding: 3px"
+                                        th:text="${proceeding.jurisdiction}"></td>
+                                    <td class="grey-text text-center" style="width: 25%; padding: 3px"
+                                        th:text="${proceeding.nameOfTheCourt}"></td>
+                                    <td class="grey-text text-center" style="width: 20%; padding: 3px"
+                                        th:text="${proceeding.result}"></td>
+                                </tr>
+                            </table>
+                        </th:block>
+                    </th:block>
+                    <br>
+                    <div class="text-center" th:each="vendorsourcename:${vendorUploadChecks.vendorAttirbuteValue}"
+                         th:if="${vendorsourcename != null}">
+                        <div th:if="${#strings.contains(vendorsourcename.sourceName, 'CRIMINAL')}">
+                            <div th:each="encodedImageMap : ${root.pdfByes}">
+                                <div th:each="entry : ${encodedImageMap}">
+                                    <span th:if="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                        <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;">
+                                                <th:block th:each="value : ${entry.value}">
+                                                    <img th:src="'data:image/png;base64,' + ${value}" alt="PDF Image"
+                                                         style="width: 600px; height: auto;">
+                                                </th:block>
+                                        </span>
+                                    </span>
+                                    <span th:unless="${#strings.equalsIgnoreCase(#strings.trim(vendorsourcename.sourceName), #strings.trim(entry.key))}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!--  CRIMINAL checks with proofs ends-->
+
+</section>
+</body>
+</html>

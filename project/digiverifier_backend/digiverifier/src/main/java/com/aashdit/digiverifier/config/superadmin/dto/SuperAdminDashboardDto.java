@@ -12,17 +12,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SuperAdminDashboardDto {
-	
-	private String fromDate;
-	
-	private String toDate;
-	
-	private Long organizationId;
-	
-	private Long sourceId;
-	
-	private List<CandidateStatusCountDto> candidateStatusCountDto;
-	
-	private List<ServiceConfigdashboardDto> serviceConfigdashboardDto;
+
+    private String fromDate;
+
+    private String toDate;
+
+    private Long organizationId;
+
+    private Long sourceId;
+
+    private List<CandidateStatusCountDto> candidateStatusCountDto;
+
+    private List<ServiceConfigdashboardDto> serviceConfigdashboardDto;
 
 }

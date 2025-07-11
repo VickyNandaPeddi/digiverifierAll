@@ -5,10 +5,10 @@ import lombok.Data;
 @Data
 public class EpfoDataFromApiDto {
 
-	String uan;
-	String name;
-	String company;
-	String doe;
-	String doj;
-	
+    String uan;
+    String name;
+    String company;
+    String doe;
+    String doj;
+
 }

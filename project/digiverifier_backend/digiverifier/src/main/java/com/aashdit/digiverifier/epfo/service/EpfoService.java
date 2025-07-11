@@ -5,9 +5,9 @@ import com.aashdit.digiverifier.epfo.dto.EpfoDetailsDto;
 
 public interface EpfoService {
 
-	ServiceOutcome<EpfoDetailsDto>  getEpfoCaptcha(String candidateId);
+    ServiceOutcome<EpfoDetailsDto> getEpfoCaptcha(String candidateId);
 
-	ServiceOutcome<String> getEpfodetail(EpfoDetailsDto epfoDetails);
+    ServiceOutcome<String> getEpfodetail(EpfoDetailsDto epfoDetails);
 
-	ServiceOutcome<String> getEpfodetailNew(EpfoDetailsDto epfoDetails);
+    ServiceOutcome<String> getEpfodetailNew(EpfoDetailsDto epfoDetails);
 }

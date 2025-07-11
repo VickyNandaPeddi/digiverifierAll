@@ -6,23 +6,23 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class IssuedDocumentsResponse implements Serializable{
+public class IssuedDocumentsResponse implements Serializable {
 
-	
-	private static final long serialVersionUID = -8771556550427023422L;
-	
-	private String name;
-	private String type;
-	private String size;
-	private String date;
-	private String parent;
-	private List<String> mime;
-	private String uri;
-	private String doctype;
-	private String description;
-	private String issuerid;
-	private String issuer;
-	
+
+    private static final long serialVersionUID = -8771556550427023422L;
+
+    private String name;
+    private String type;
+    private String size;
+    private String date;
+    private String parent;
+    private List<String> mime;
+    private String uri;
+    private String doctype;
+    private String description;
+    private String issuerid;
+    private String issuer;
+
 //	public IssuedDocumentsResponse() {
 //		
 //	}
@@ -51,5 +51,5 @@ public class IssuedDocumentsResponse implements Serializable{
 //				+ ", parent=" + parent + ", mime=" + mime + ", uri=" + uri + ", doctype=" + doctype + ", description="
 //				+ description + ", issuerid=" + issuerid + ", issuer=" + issuer + "]";
 //	}
-	
+
 }

@@ -1,47 +1,28 @@
 package com.aashdit.digiverifier.config.superadmin.service;
 
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
-import org.springframework.beans.BeanUtils;
-
-
+import com.aashdit.digiverifier.common.model.ServiceOutcome;
+import com.aashdit.digiverifier.config.admin.model.User;
+import com.aashdit.digiverifier.config.admin.repository.UserRepository;
+import com.aashdit.digiverifier.config.superadmin.dto.*;
 import com.aashdit.digiverifier.config.superadmin.model.*;
 import com.aashdit.digiverifier.config.superadmin.repository.*;
+import com.aashdit.digiverifier.config.superadmin.util.ClientCSVUtil;
+import com.aashdit.digiverifier.config.superadmin.util.ClientExcelUtil;
+import com.aashdit.digiverifier.utils.SecurityHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.aashdit.digiverifier.config.superadmin.util.ClientExcelUtil;
-import com.aashdit.digiverifier.config.superadmin.util.ClientCSVUtil;
-import com.aashdit.digiverifier.config.superadmin.repository.OrgclientscopeRepository;
-
-import com.aashdit.digiverifier.common.model.ServiceOutcome;
-import com.aashdit.digiverifier.config.admin.model.User;
-import com.aashdit.digiverifier.config.admin.repository.UserRepository;
-import com.aashdit.digiverifier.config.superadmin.dto.OrganizationDto;
-import com.aashdit.digiverifier.config.superadmin.dto.ServiceConfigurationDto;
-import com.aashdit.digiverifier.config.superadmin.dto.ServiceMasterDto;
-import com.aashdit.digiverifier.config.superadmin.dto.SourceServiceListDto;
-import com.aashdit.digiverifier.config.superadmin.dto.OrgDto;
-import com.aashdit.digiverifier.utils.SecurityHelper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.aashdit.digiverifier.config.superadmin.model.VendorMasterNew;
-import com.aashdit.digiverifier.config.superadmin.repository.VendorMasterNewRepository;
-import com.aashdit.digiverifier.config.superadmin.dto.VendorMasterDto;
-import com.aashdit.digiverifier.config.superadmin.model.VendorCheckStatusMaster;
-
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -723,26 +704,29 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public ServiceOutcome<List<OrganizationDto>> getOrganizationListAfterBilling() {
         ServiceOutcome<List<OrganizationDto>> svcSearchResult = new ServiceOutcome<List<OrganizationDto>>();
-        try {
-            String query = "select distinct (sm.organization_id),org.organization_name from t_dgv_service_master sm join t_dgv_organization_master org on org.organization_id = sm.organization_id where org.is_active =true";
-            Query resultQuery = entityManager.createNativeQuery(query.toString());
-            List<Object[]> organizationObjectList = resultQuery.getResultList();
-            List<OrganizationDto> organizationList = organizationObjectList.stream().map(OrganizationDto::new).collect(Collectors.toList());
-            if (!organizationList.isEmpty()) {
-                svcSearchResult.setData(organizationList);
-                svcSearchResult.setOutcome(true);
-                svcSearchResult.setMessage("SUCCESS");
-            } else {
-                svcSearchResult.setData(null);
-                svcSearchResult.setOutcome(false);
-                svcSearchResult.setMessage("NOT FOUND");
-            }
-        } catch (Exception ex) {
-            log.error("Exception occured in getServiceTypeConfigByOrgId method in OrganizationServiceImpl-->" + ex);
-            svcSearchResult.setData(null);
-            svcSearchResult.setOutcome(false);
-            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
-        }
+//        try {
+//            StringBuilder query = new StringBuilder();
+//            query.append("select distinct (sm.organization_id),org.organization_name ");
+//            query.append("from t_dgv_service_master sm ");
+//            query.append("join t_dgv_organization_master org on org.organization_id = sm.organization_id where org.is_active =true;");
+//            Query resultQuery = entityManager.createNativeQuery(query.toString());
+//            List<Object[]> organizationObjectList = resultQuery.getResultList();
+//            List<OrganizationDto> organizationList = organizationObjectList.stream().map(OrganizationDto::new).collect(Collectors.toList());
+//            if (!organizationList.isEmpty()) {
+//                svcSearchResult.setData(organizationList);
+//                svcSearchResult.setOutcome(true);
+//                svcSearchResult.setMessage("SUCCESS");
+//            } else {
+//                svcSearchResult.setData(null);
+//                svcSearchResult.setOutcome(false);
+//                svcSearchResult.setMessage("NOT FOUND");
+//            }
+//        } catch (Exception ex) {
+//            log.error("Exception occured in getServiceTypeConfigByOrgId method in OrganizationServiceImpl-->" + ex);
+//            svcSearchResult.setData(null);
+//            svcSearchResult.setOutcome(false);
+//            svcSearchResult.setMessage("Something Went Wrong, Please Try After Sometimes.");
+//        }
         return svcSearchResult;
     }
 
@@ -903,7 +887,9 @@ public class OrganizationServiceImpl implements OrganizationService {
         ServiceOutcome<List<VendorCheckStatusMaster>> svcSearchResult = new ServiceOutcome<List<VendorCheckStatusMaster>>();
         try {
             List<VendorCheckStatusMaster> vendorCheckStatusMasterList = vendorCheckStatusMasterRepository.findAll();
-            List<VendorCheckStatusMaster> filteredList = vendorCheckStatusMasterList.stream().filter(vendor -> vendor.getVendorCheckStatusMasterId() != 7 && vendor.getVendorCheckStatusMasterId() != 8).collect(Collectors.toList());
+            List<VendorCheckStatusMaster> filteredList = vendorCheckStatusMasterList.stream()
+                    .filter(vendor -> vendor.getVendorCheckStatusMasterId() != 7 && vendor.getVendorCheckStatusMasterId() != 8)
+                    .collect(Collectors.toList());
             if (!filteredList.isEmpty()) {
                 svcSearchResult.setData(filteredList);
                 svcSearchResult.setOutcome(true);

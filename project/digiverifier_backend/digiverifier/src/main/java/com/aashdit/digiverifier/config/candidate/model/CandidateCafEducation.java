@@ -1,30 +1,16 @@
 package com.aashdit.digiverifier.config.candidate.model;
 
-import java.beans.Transient;
-import java.io.Serializable;
-import java.util.Date;
-
-import javax.mail.Multipart;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.annotations.Type;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.aashdit.digiverifier.config.admin.model.User;
 import com.aashdit.digiverifier.config.superadmin.model.Color;
-import com.aashdit.digiverifier.config.superadmin.model.ServiceMaster;
 import com.aashdit.digiverifier.config.superadmin.model.ServiceSourceMaster;
-import com.aashdit.digiverifier.config.superadmin.model.Source;
-
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.io.Serializable;
+import java.sql.Types;
+import java.util.Date;
 
 @Data
 @Entity
@@ -108,7 +94,7 @@ public class CandidateCafEducation implements Serializable {
     @Column(name = "last_updated_on")
     private Date lastUpdatedOn;
 
-    @Type(type = "org.hibernate.type.BinaryType")
+    @JdbcTypeCode(Types.LONGVARBINARY)
     @Column(name = "education_certificate", columnDefinition = "BLOB")
     private byte[] certificate;
 
@@ -122,6 +108,10 @@ public class CandidateCafEducation implements Serializable {
     @JoinColumn(name = "suspect_clg_master_id")
     private SuspectClgMaster suspectClgMaster;
 
-    @Column(name = "course_name")
-    private String courseName;
+    @Column(name = "qualification_type")
+    private String qualificationType;
+
+    @Column(name = "country")
+    private String country;
+
 }

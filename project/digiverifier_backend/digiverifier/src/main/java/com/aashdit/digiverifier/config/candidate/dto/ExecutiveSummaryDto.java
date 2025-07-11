@@ -12,26 +12,26 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public class ExecutiveSummaryDto {
 
-	String verificationItem;
-	
-	String source;
-	
-	String result;
+    String verificationItem;
 
-	String colorCode;
-	
-	String colorHexCode;
-	
-	private int position;
-	
-	private String details;
-	
-	private VerificationStatus verificationStatus;
-	
-	public ExecutiveSummaryDto(ExecutiveName verificationItem, String details, VerificationStatus status) {
-		this.setVerificationItem(StringUtils.capitalize(verificationItem.name()));
-		this.setDetails(details);
-		this.setVerificationStatus(status);
-	}
-	
+    String source;
+
+    String result;
+
+    String colorCode;
+
+    String colorHexCode;
+
+    private int position;
+
+    private String details;
+
+    private VerificationStatus verificationStatus;
+
+    public ExecutiveSummaryDto(ExecutiveName verificationItem, String details, VerificationStatus status) {
+        this.setVerificationItem(StringUtils.capitalize(verificationItem.name()));
+        this.setDetails(details);
+        this.setVerificationStatus(status);
+    }
+
 }

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {environment} from 'src/environments/environment';
 
 @Injectable({
@@ -8,6 +8,22 @@ import {environment} from 'src/environments/environment';
 export class OrgadminDashboardService {
 
   constructor(private http: HttpClient) {
+  }
+
+  public setFromDate(statCode: string) {
+    localStorage.setItem('dashBoardFromDate', statCode);
+  }
+
+  public getFromDate() {
+    return localStorage.getItem('dashBoardFromDate');
+  }
+
+  public setToDate(statCode: string) {
+    localStorage.setItem('dashBoardToDate', statCode);
+  }
+
+  public getToDate() {
+    return localStorage.getItem('dashBoardToDate');
   }
 
   getUploadDetails(data: any) {
@@ -79,7 +95,11 @@ export class OrgadminDashboardService {
   }
 
   getReportDeliveryDetails(data: any) {
-    return this.http.post(`${environment.apiUrl}/api/candidate/getReportDeliveryDetailsStatusAndCount`, data);
+    return this.http.post(`${environment.apiUrl}/api/candidate/findConVendorStatusCount`, data);
+  }
+
+  findConVendorTotalCount(data: any) {
+    return this.http.post(`${environment.apiUrl}/api/candidate/findConVendorTotalCount`, data);
   }
 
   getPendingDetailsStatusAndCount(data: any) {
@@ -91,6 +111,18 @@ export class OrgadminDashboardService {
     return this.http.post(`${environment.apiUrl}/api/vendorCheck/findAllSubmittedCandidatesByDateRange`, data);
   }
 
+  getCandidatesSubmittedDetailsByDateRangeForExcelExport(data: any) {
+    return this.http.post(`${environment.apiUrl}/api/vendorCheck/findAllSubmittedCandidatesByDateRangeForExcelExport`, data);
+  }
+  getTrackerDataByDateRangeForExcelExport(data: any) {
+    return this.http.post(`${environment.apiUrl}/api/vendorCheck/trackerdata`,data
+    );
+  }
+
+  getTrackerDataVendorByDateRangeForExcelExport(data: any) {
+    return this.http.post(`${environment.apiUrl}/api/vendorCheck/trackerdataVendor`,data
+    );
+  }
   getConventionalUploadDetails(data: any) {
     return this.http.post(`${environment.apiUrl}/api/candidate/getUploadDetailsStatusAndCountConventional`, data);
   }

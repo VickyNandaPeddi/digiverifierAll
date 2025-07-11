@@ -13,5 +13,7 @@ public class VendorAttributeDto {
 
     private String sourceName;
     private ArrayList<String> vendorAttirbuteValue;
+    private int indexNumber;
+    private String checkStatus;
 
 }

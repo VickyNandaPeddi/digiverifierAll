@@ -1,20 +1,16 @@
 package com.aashdit.digiverifier.config.admin.service;
 
-import java.io.IOException;
-import java.util.List;
-
-import com.aashdit.digiverifier.config.admin.dto.VendorChecksDto;
-import com.aashdit.digiverifier.config.superadmin.dto.DashboardDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.aashdit.digiverifier.common.model.ServiceOutcome;
 import com.aashdit.digiverifier.config.admin.dto.UserDto;
+import com.aashdit.digiverifier.config.admin.dto.VendorChecksDto;
 import com.aashdit.digiverifier.config.admin.model.User;
-import com.aashdit.digiverifier.config.admin.dto.VendorInitiatDto;
 import com.aashdit.digiverifier.config.admin.model.VendorChecks;
+import com.aashdit.digiverifier.config.superadmin.dto.DashboardDto;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
 
 @Service
 public interface UserService {
@@ -54,11 +50,11 @@ public interface UserService {
     ServiceOutcome<List<User>> getVendorList(Long vendorId);
 
     // ServiceOutcome<VendorInitiatDto> saveInitiateVendorChecks(VendorInitiatDto vendorInitiatDto);
-    @Transactional(rollbackFor = Exception.class)
+
     ServiceOutcome<VendorChecks> saveInitiateVendorChecks(String vendorChecks, MultipartFile proofDocumentNew, String documentUrl) throws IOException;
 
 
-    ServiceOutcome<VendorChecks> saveproofuploadVendorChecks(String vendorChecks, MultipartFile proofDocumentNew, String vendorRemarksReport);
+    ServiceOutcome<VendorChecks> saveproofuploadVendorChecks(String vendorChecks, List<MultipartFile> proofDocumentNew, String vendorRemarksReport);
 
     ServiceOutcome<List<VendorChecks>> getVendorCheckDetails(Long candidateId);
 
@@ -67,4 +63,9 @@ public interface UserService {
     ServiceOutcome<List<VendorChecks>> getallVendorChecsa(Long vendorId);
 
 //    public String uploadVendorRemarksForChecks(Long vendorCheckId, String vendorRemarksJson);
+
+    public ServiceOutcome<List<VendorChecksDto>> searchAllVendorData(String searchText);
+
+
+    public ServiceOutcome<String> uploadUan(String uanDtoString, List<MultipartFile> proofDocumentNew);
 }

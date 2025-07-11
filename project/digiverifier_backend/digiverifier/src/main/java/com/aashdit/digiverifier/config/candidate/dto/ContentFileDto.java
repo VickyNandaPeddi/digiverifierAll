@@ -9,7 +9,7 @@ import com.aashdit.digiverifier.common.enums.ContentSubCategory;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ContentFileDto {
-	private Long id;
-	private byte[] document;
-	private ContentSubCategory contentSubCategory;
+    private Long id;
+    private byte[] document;
+    private ContentSubCategory contentSubCategory;
 }

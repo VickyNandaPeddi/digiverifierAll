@@ -7,13 +7,13 @@ import lombok.Data;
 @Data
 public class ITRDataFromApiDto {
 
-	String deductor;
-	String tan;
-	String amount;
-	String tds;
-	String date;
-	String section;
-	String assesmentYear;
-	String financialYear;
-	Date filedDate;
+    String deductor;
+    String tan;
+    String amount;
+    String tds;
+    String date;
+    String section;
+    String assesmentYear;
+    String financialYear;
+    Date filedDate;
 }

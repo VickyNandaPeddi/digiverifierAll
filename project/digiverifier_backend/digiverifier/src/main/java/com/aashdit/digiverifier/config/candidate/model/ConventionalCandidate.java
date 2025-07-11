@@ -1,14 +1,10 @@
 package com.aashdit.digiverifier.config.candidate.model;
 
-import com.aashdit.digiverifier.config.superadmin.model.Organization;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.mapping.ToOne;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
@@ -25,9 +21,8 @@ public class ConventionalCandidate implements Serializable {
     @NotNull
     @Column(name = "candidate_id")
     private Long candidateId;
-    @NotNull
     @Column(name = "conventional_candidate_id")
-    private Long conventionalCandidateId;
+    private String conventionalCandidateId;
 
     @Column(name = "conventional_request_id")
     private Long conventionalRequestId;
@@ -52,7 +47,7 @@ public class ConventionalCandidate implements Serializable {
     @Column(name = "father_date_of_birth")
     private String fatherDateOfBirth;
 
-    @Column(name = "insufficiency_remarks",length = 3000)
+    @Column(name = "insufficiency_remarks", length = 3000)
     private String insufficiencyRemarks;
 
 

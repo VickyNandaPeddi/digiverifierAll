@@ -2,3 +2,25 @@
 .colorId2{
     display: none;
 }
+
+/* Optional: Tooltip styling */
+[title] {
+    position: relative;
+    cursor: pointer; /* Show cursor as pointer when hovering */
+  }
+  
+  /* Optional: Tooltip content styling */
+  .tooltip {
+    position: absolute;
+    z-index: 1000;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    display: none;
+  }
+  
+  [title]:hover .tooltip {
+    display: block; /* Show tooltip on hover */
+  }
+  

@@ -10,13 +10,19 @@ import java.util.List;
 @Repository
 public interface ConventionalCandidateExperienceRepository extends JpaRepository<ConventionalCandidateExperience, Long> {
 
-    Boolean existsByConventionalCandidateId(Long candidateId);
+
+//    Boolean existsByConventionalCandidateId(Long candidateId);
     Boolean existsByConventionalRequestId(Long conventionalRequestId);
 
-    List<ConventionalCandidateExperience> findByConventionalCandidateId(Long conventionalCandidateId);
 
-    @Modifying
-    void deleteAllByConventionalCandidateId(Long conventionalCandidateID);
+    Boolean existsByConventionalRequestIdAndEmploymentType(Long conventionalRequestId,String employmentType);
+
+    List<ConventionalCandidateExperience> findByConventionalRequestId(Long conventionalCandidateId);
+
+//    @Modifying
+//    void deleteAllByConventionalCandidateId(Long conventionalCandidateID);
     @Modifying
     void deleteAllByConventionalRequestId(Long conventionalRequestID);
+    
+//    List<ConventionalCandidateExperience> findByConventionalCandidateId(Long conventionalCandidateId);
 }

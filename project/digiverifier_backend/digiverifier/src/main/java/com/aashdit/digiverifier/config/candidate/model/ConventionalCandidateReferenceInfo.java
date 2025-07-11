@@ -1,8 +1,8 @@
 package com.aashdit.digiverifier.config.candidate.model;
 
+import jakarta.persistence.*;
 import lombok.Data;
 
-import javax.persistence.*;
 import java.io.Serializable;
 
 @Data
@@ -17,9 +17,9 @@ public class ConventionalCandidateReferenceInfo implements Serializable {
     private Long referenceId;
 
     @Column(name = "candidate_id")
-    private Long candidateId;
+    private String candidateId;
     @Column(name = "conventional_candidate_id")
-    private Long conventionalCandiateId;
+    private String conventionalCandiateId;
 
     @Column(name = "conventional_requestid")
     private Long conventionalRequestId;
@@ -49,7 +49,7 @@ public class ConventionalCandidateReferenceInfo implements Serializable {
     @Column(name = "professional_relation")
     private String professionalRelation;
 
-    @Column(name = "insufficiency_remarks",length = 3000)
+    @Column(name = "insufficiency_remarks", length = 3000)
     private String insufficiencyRemarks;
 
 

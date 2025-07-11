@@ -28,15 +28,15 @@ public class LicheckRequiredResponseDto {
     private Long vendorId;
     private String requestID;
     private Long sourceId;
-
     private String vendorName;
-
     private String sourceName;
-
-    private String doucmentName;
-
-
-
+    private String documentName;
+    private CandidateuploadS3Documents candidateuploadS3Documents;
+    private String fastTrackDateTime;
+    private String stopCheckStatus;
+    private String candidateBasicId;
+    private String disableStatus;
+    private int indexNumber;
 
     public LicheckRequiredResponseDto(Long id, Long checkCode, String checkName, String checkStatus, String checkRemarks, String modeOfVerificationRequired, String modeOfVerificationPerformed, String completedDateTime) {
         this.checkCode = checkCode;
@@ -93,5 +93,6 @@ public class LicheckRequiredResponseDto {
         this.sourceName = sourceName;
         this.vendorName = vendorName;
     }
+
 
 }

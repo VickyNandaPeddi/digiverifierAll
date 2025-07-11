@@ -4,11 +4,11 @@ import lombok.Data;
 
 @Data
 public class EmployerData {
-	private String employerName;
-	
-	private String doj;
-	
-	private String doe;
-	
-	private String source;
+    private String employerName;
+
+    private String doj;
+
+    private String doe;
+
+    private String source;
 }

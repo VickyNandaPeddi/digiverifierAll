@@ -18,7 +18,8 @@
               <div class="col-md-12">
                 <p>
                   <i class="fas fa-user"></i>
-                  <span style="padding: 12px 0 0 0">{{ candidateName }} </span>
+                  <span style="padding: 12px 0 0 0">{{ this.candidateCode }}/{{ this.candidateIdView }}/{{ this.candidateName }} </span>
+
                 </p>
               </div>
             </div>
@@ -38,64 +39,50 @@
           <div class="card-body">
             <div class="row">
               <div class="col-md-12">
-                <table
-                  class="table table-bordered mt-2"
-                  style="border-bottom: 1px solid black"
-                >
+                <table class="table table-bordered mt-2" style="border-bottom: 1px solid black">
                   <thead style="display: table-row-group">
                   <tr>
                     <th>S.No</th>
                     <th>Check Unique Id</th>
+                    <th>Check Name</th>
+                    <th>Check Status</th>
                     <th>vendor name</th>
                     <th>Document Name</th>
                     <th>View Document</th>
-                    <th>Result</th>
-                    <th>Action</th>
+                    <th>Discrepancy Report</th>
+                    <th>
+                      <button type="button"
+                      (click)="triggerCheckStatusArray()"  [disabled]="!isAnyCheckboxSelected || allGreen()"  class="btn btn-sm btn-success mb-2">Trigger Check Status</button>
+                      <br>
+                      <input type="checkbox" (click)="selectAll($event)"></th>
+                    <th>Check Status Response</th>
                   </tr>
                   </thead>
                   <tbody>
                   <tr *ngFor="let item of employ; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ item.checkUniqueId }}</td>
+                    <td>{{ item.checkName }}</td>
+                    <td>{{ item.checkStatus }}</td>
                     <td>{{ item.userFirstName }}</td>
-                    <td>{{ item.documentname }}</td>
+                    <td>{{ (item.documentname !== undefined && item.documentname !== null) ? item.documentname : 'NA' }}
+                    </td>
                     <td>
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-primary"
-                        title="View Document"
-                        (click)="openCertificate(modalCertificate, item.document)">
+                      <button type="button" class="btn btn-sm btn-primary" title="View Document"
+                              (click)="item.colorHexCode!==null?downloadPdf(item.colorHexCode):fileview(item.document)">
                         <i class="fa fa-eye"></i>
                       </button>
-                      <!--                      <span (click)="openModal(modalData)" *ngIf="item.document != null"-->
-                      <!--                            style="cursor: pointer;color: #0074f1;text-decoration: underline;">-->
-                      <!--                                            (View Document)-->
-                      <!--                                        </span>-->
                     </td>
                     <td>
-                        <span
-                          class="bg-result"
-                          [style.color]="item.colorHexCode"
-                        >{{ item.agentColor }}</span
-                        >
-                    </td>
-
-                    <td>
-                        <span *ngIf="item.agentColor == 'Green'"
-                        >No Action</span
-                        >
-                      <button
-                        *ngIf="item.agentColor !== 'Green'"
-                        class="btn btn-warning btn-sm"
-                        title="Edit"
-                        id="edit{{ i }}"
-                        (click)="
-                            openVendorModal(modalVendor, item.vendorChecks)
-                          "
-                      >
-                        <i class="fas fa-pen"></i>
+                      <button type="button" class="btn btn-sm btn-primary" title="{{ (item.documentname !== undefined && item.documentname !== null) ? item.documentname : 'View Document' }}"
+                              (click)="viewDiscrepancyReport(item.vendorChecks)"
+                              [disabled]="item.checkStatus != null && item.checkStatus !== 'MAJORDISCREPANCY' && item.checkStatus !== 'MINORDISCREPANCY'">
+                        <i class="fa fa-eye"></i>
                       </button>
                     </td>
+                    <td><input type="checkbox" id="{{item.checkUniqueId}}" [disabled]="getIconColor(item) === 'green'"   value="{{item.checkUniqueId}}"
+                               class="childCheck" (change)="childCheck($event)"></td>
+                    <td> <i [class]="getIconClass(item)" [style.color]="getIconColor(item)" [title]="item.triggeredResponse" ></i></td>
                   </tr>
                   </tbody>
                 </table>
@@ -104,68 +91,85 @@
           </div>
         </div>
 
-        <div class="col-md-12 mt-4 mb-4 text-center">
-<!--          <button-->
-<!--            type="button"-->
-<!--            (click)="openAddcommentModal(modalAddcomments)"-->
-<!--            class="btn btn-primary"-->
-<!--          >-->
-<!--            Add Comments-->
-<!--          </button>-->
 
-          <button type="button" (click)="InterimReport()" class="btn btn-primary">Generate Interim Report</button>
-          <button
-            type="button" [disabled]="finalReportDisabled === 8" [disabled]="approveenable === 'false'"
-            (click)="submitReportApproval(formReportApproval)"
-            class="btn btn-primary">
-            Approve Report
-          </button>
-<!--          <button-->
-<!--            type="button"-->
-<!--            (click)="generateExcelReportTwo()"-->
-<!--            class="btn btn-primary"-->
-<!--          >-->
-<!--            GenerateExcel-->
-<!--          </button>-->
+        <div class="card shadow mb-2" *ngIf="employ">
+          <div class="card-header py-3 d-flex">
+            <div class="col-md-5">
+              <h6 class="m-0 font-weight-bold text-primary"></h6>
+            </div>
+            <div class="ml-4">
+              <h6 class="m-0 font-weight-bold text-primary">Agent Uploaded Checks</h6>
+            </div>
+            <div style="margin-left:18cm;">
+              <button type="button" class="btn btn-sm btn-success ml-3" (click)="openUploadUanModal(uploadUanModal)">    Upload UAN
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <table class="table table-bordered mt-2" style="border-bottom: 1px solid black">
+                  <thead style="display: table-row-group">
+                  <tr>
+                    <th>S.No</th>
+                    <th>Uan No</th> <!-- Corrected this line -->
+                    <th>Check Name</th>
+                    <th>Check Status</th>
+                    <th>Vendor Name</th>
+                    <th>Document Name</th>
+                    <th>Remarks</th>
+                    <th>View Document</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let item of agentUploadedData; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ item.uanNo }}</td>
+                    <td>{{ item.sourceId }}</td>
+                    <td>{{ item.colorCode }}</td>
+                    <td>{{ item.createdBy }}</td>
+                    <td>{{ (item.documentName !== undefined && item.documentName !== null) ? item.documentName : 'NA' }}</td>
+                    <td>{{ (item.remarks !== undefined && item.remarks !== null) ? item.remarks : 'NA' }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-primary" title="View Document"
+                              (click)="downloadPdf(item.pathKey)">
+                        <i class="fa fa-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+
+              </div>
+            </div>
+          </div>
         </div>
+
+        <div class="col-md-12 mt-4 mb-4 text-center">
+          <button type="button" (click)="InterimConfirmation(InterimconfirmContent)" class="btn btn-primary">Send
+            Interim Report to Client
+          </button>
+          <button type="button" (click)="viewInterimReport()" class="btn btn-primary">View Report</button>
+          <!-- <button type="button" (click)="viewDiscrepancyReport()" class="btn btn-primary">View Discrepancy Report</button> -->
+          <button type="button"
+                  (click)="FinalConfirmation(FinalconfirmContent)" class="btn btn-primary">
+            Send Final Report to Client
+          </button>
+          <button type="button" (click)="openDateModal(dateModalContent)" class="btn btn-warning">
+            Change Report Delivery Date
+          </button>
+         </div>
       </div>
     </div>
   </form>
 </div>
 
-<ng-template #modalCertificate let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">View Certificate</h4>
-    <button
-      type="button"
-      class="close"
-      aria-label="Close"
-      (click)="modal.dismiss('Cross click')"
-    >
-      <span aria-hidden="true">×</span>
-    </button>
-  </div>
-  <div class="modal-body">
-    <div class="row">
-      <div class="col-md-12">
-        <iframe
-          id="viewcandidateCertificate"
-          style="width: 100%; height: 600px"
-        ></iframe>
-      </div>
-    </div>
-  </div>
-</ng-template>
 
 <ng-template #modalVendor let-modal>
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">Vendor proofs Status</h4>
-    <button
-      type="button"
-      class="close"
-      aria-label="Close"
-      (click)="modal.dismiss('Cross click')"
-    >
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
       <span aria-hidden="true">×</span>
     </button>
   </div>
@@ -177,10 +181,7 @@
         <div class="col-md-10">
           <div class="form-group">
             <label for="" class="required">Result</label>
-            <select
-              class="form-control form-control-sm"
-              formControlName="colorId"
-            >
+            <select class="form-control form-control-sm" formControlName="colorId">
               <!-- <option [ngValue]="null" disabled>{{ item.colorColorName }}</option> -->
               <option [ngValue]="null" disabled>--Select--</option>
               <option *ngFor="let item of getColors" [value]="item.colorId">
@@ -193,11 +194,7 @@
       <div class="row">
         <div class="col-md-12 text-center mt-3 pb-3">
           <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            (click)="modal.close('Save click')"
-          >
+          <button type="button" class="btn btn-danger btn-sm" (click)="modal.close('Save click')">
             Close
           </button>
         </div>
@@ -208,30 +205,19 @@
 <ng-template #modalAddcomments let-modal>
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">AddComments Status</h4>
-    <button
-      type="button"
-      class="close"
-      aria-label="Close"
-      (click)="modal.dismiss('Cross click')"
-    >
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
       <span aria-hidden="true">×</span>
     </button>
   </div>
   <div class="modal-body">
-    <form
-      [formGroup]="formAddcomment"
-      (ngSubmit)="submitAddcomment(formAddcomment)"
-    >
+    <form [formGroup]="formAddcomment" (ngSubmit)="submitAddcomment(formAddcomment)">
       <input type="hidden" formControlName="id"/>
       <div class="row">
         <div class="col-md-3">
           <div class="form-group">
             <label for="" class="col-md-12">Comments: </label>
             <div class="col-md-12">
-              <textarea
-                formControlName="addComments"
-                style="font-family: sans-serif; font-size: 2.1em"
-              >
+              <textarea formControlName="addComments" style="font-family: sans-serif; font-size: 2.1em">
               </textarea>
             </div>
           </div>
@@ -239,18 +225,10 @@
       </div>
       <div class="row">
         <div class="col-md-12 text-center mt-3 pb-3">
-          <button
-            type="submit"
-            [disabled]="!formAddcomment.valid"
-            class="btn btn-primary btn-sm"
-          >
+          <button type="submit" [disabled]="!formAddcomment.valid" class="btn btn-primary btn-sm">
             Submit
           </button>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            (click)="modal.close('Save click')"
-          >
+          <button type="button" class="btn btn-danger btn-sm" (click)="modal.close('Save click')">
             Close
           </button>
         </div>
@@ -258,3 +236,190 @@
     </form>
   </div>
 </ng-template>
+<ng-template #InterimconfirmContent let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Confirmation</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('cancel')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <p style="font-size: 15px; font-weight: 500;">Are you sure you want to send the Interim report to the client?</p>
+  </div>
+  <div class="modal-footer justify-content-center">
+    <button type="button" class="btn btn-primary" (click)="modal.close('confirm')">OK</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
+  </div>
+</ng-template>
+<ng-template #FinalconfirmContent let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Confirmation</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('cancel')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <p style="font-size: 15px; font-weight: 500;">Are you sure you want to send the Final report to the client?</p>
+  </div>
+  <div class="modal-footer justify-content-center">
+    <button type="button" class="btn btn-primary" (click)="modal.close('confirm')">OK</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
+  </div>
+</ng-template>
+<ng-template #DiscrepancyconfirmContent let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Confirmation</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('cancel')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <p style="font-size: 15px; font-weight: 500;">Are you sure you want to send the Discrepancy report to the
+      client?</p>
+  </div>
+  <div class="modal-footer justify-content-center">
+    <button type="button" class="btn btn-primary" (click)="modal.close('confirm')">OK</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
+  </div>
+</ng-template>
+<!-- Date Selection Modal -->
+<ng-template #dateModalContent let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Change Report Delivery Date</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('cancel')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <label for="deliveryDate">Select New Date:</label>
+    <input type="date" id="deliveryDate" class="form-control" [(ngModel)]="selectedDate">
+  </div>
+  <div class="modal-footer justify-content-center">
+    <button type="button" class="btn btn-primary" (click)="confirmDateChange(modal)">Confirm</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
+  </div>
+</ng-template>
+<ng-template #uploadUanModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="uploadUanModalLabel">Upload UAN</h5>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <!-- Reactive Form for Upload UAN -->
+    <form [formGroup]="uanForm" (ngSubmit)="onSubmit()">
+      <!-- UAN No Text Box -->
+      <div class="form-group">
+        <label for="uanNumber">UAN No</label>
+        <input
+          type="text"
+          class="form-control"
+          id="uanNumber"
+          formControlName="uanNumber"
+          placeholder="Enter UAN No"
+        />
+        <div
+          *ngIf="uanForm.get('uanNumber')?.invalid && uanForm.get('uanNumber')?.touched"
+          class="text-danger"
+        >
+          <!-- Numeric Validation Error -->
+          <span *ngIf="uanForm.get('uanNumber')?.errors?.['pattern']">
+            UAN Number must be a number.
+          </span>
+          <!-- Required Validation Error -->
+          <span *ngIf="uanForm.get('uanNumber')?.errors?.['required']">
+            UAN Number is required.
+          </span>
+        </div>
+      </div>
+
+      <!-- Remarks Text Box -->
+      <div class="form-group">
+        <label for="remarks">Remarks</label>
+        <textarea
+          class="form-control"
+          id="remarks"
+          formControlName="remarks"
+          rows="3"
+          placeholder="Enter remarks"
+        ></textarea>
+        <div
+          *ngIf="uanForm.get('remarks')?.invalid && uanForm.get('remarks')?.touched"
+          class="text-danger"
+        >
+          Remarks are required.
+        </div>
+      </div>
+
+      <!-- Color Code Dropdown -->
+      <div class="form-group">
+        <label for="colorCode">Color Code</label>
+        <select
+          class="form-control"
+          id="colorCode"
+          formControlName="colorCode"
+        >
+          <option value="MINORDISCREPANCY">Red</option>
+          <option value="CLEAR">Green</option>
+          <option value="UNABLETOVERIFY">Amber</option>
+        </select>
+        <div
+          *ngIf="uanForm.get('colorCode')?.invalid && uanForm.get('colorCode')?.touched"
+          class="text-danger"
+        >
+          Color Code is required.
+        </div>
+      </div>
+
+      <!-- File Upload -->
+      <div class="upload-container">
+        <input
+          type="file"
+          class="form-control form-control-sm"
+          #fileInput
+          (change)="uploadGlobalCaseDetails(fileInput.files)"
+          multiple
+        />
+        <div id="preview-container"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('Close click')">
+          Close
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="uanForm.invalid || uploadedFiles.length === 0"
+        >
+          Upload
+        </button>
+      </div>
+    </form>
+  </div>
+</ng-template>
+<ng-template #dateChangeConfirm let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title font-weight-bold">Confirm Report Delivery Date Change</h5>
+    <button type="button" class="close" (click)="modal.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body text-center">
+    <p class="font-weight-bold">
+      The report delivery date has been changed. Do you want to proceed with the update?
+    </p>
+  </div>
+  <div class="modal-footer d-flex justify-content-between">
+    <button type="button" class="btn btn-danger font-weight-bold" (click)="clearSelectedDate(); modal.close('clear')">
+      Clear Date
+    </button>
+    <button type="button" class="btn btn-primary font-weight-bold" (click)="modal.close('confirm')">
+      Proceed
+    </button>
+  </div>
+</ng-template>
+
+
+

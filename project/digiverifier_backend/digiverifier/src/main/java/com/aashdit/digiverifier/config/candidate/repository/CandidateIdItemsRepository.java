@@ -8,8 +8,6 @@ import com.aashdit.digiverifier.config.candidate.model.CandidateIdItems;
 
 public interface CandidateIdItemsRepository extends JpaRepository<CandidateIdItems, Long> {
 
-	List<CandidateIdItems> findByCandidateCandidateCode(String candidateCode);
-
-	CandidateIdItems findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(String candidateCode, String serviceCode);
+    List<CandidateIdItems> findByRequestIdAndIdType(String requestId, String idType);
 
 }

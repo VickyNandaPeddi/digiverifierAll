@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class SubmittedCandidates {
 
-    private Long candidateId;
+    private String candidateId;
     private String psNo;
     private String name;
     private String requestId;
@@ -24,27 +24,9 @@ public class SubmittedCandidates {
 
     private Date createdOn;
 
+    private String reportResponse;
+
     private List<LicheckRequiredResponseDto> licheckRequiredResponseDtos;
 
-    public SubmittedCandidates(Long candidateId, String psNo, String name, String requestId, String requestType, String vendorId, Integer applicantId) {
-        this.candidateId = candidateId;
-        this.psNo = psNo;
-        this.name = name;
-        this.requestId = requestId;
-        this.requestType = requestType;
-        this.vendorId = vendorId;
-        this.applicantId = applicantId;
-    }
 
-    public SubmittedCandidates(Long candidateId, String psNo, String name, String requestId, String requestType, String vendorId, Integer applicantId, Date createdOn, String status) {
-        this.candidateId = candidateId;
-        this.psNo = psNo;
-        this.name = name;
-        this.requestId = requestId;
-        this.requestType = requestType;
-        this.vendorId = vendorId;
-        this.applicantId = applicantId;
-        this.status = status;
-        this.createdOn = createdOn;
-    }
 }

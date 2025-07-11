@@ -1,19 +1,15 @@
 package com.aashdit.digiverifier.config.admin.model;
 
+import com.aashdit.digiverifier.config.superadmin.model.Color;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
-import com.aashdit.digiverifier.config.admin.model.User;
-import com.aashdit.digiverifier.config.admin.model.VendorChecks;
-import com.aashdit.digiverifier.config.superadmin.model.Source;
-import com.aashdit.digiverifier.config.candidate.model.Candidate;
-import com.aashdit.digiverifier.config.superadmin.model.Color;
-// import com.aashdit.digiverifier.config.admin.model.VendorMasterNew;
-import lombok.Data;
-import org.hibernate.annotations.Type;
 
 @Data
 @Entity
@@ -32,14 +28,13 @@ import org.hibernate.annotations.Type;
 
     @NotNull
     @OneToOne
-    @JoinColumn(name = "vendor_check_id")
+    @JoinColumn(name = "vendor_check_id", unique = true)
     private VendorChecks vendorChecks;
 
 
     @Column(name = "document_name")
     private String documentname;
-
-    @Type(type = "org.hibernate.type.BinaryType")
+    @JdbcTypeCode(Types.LONGVARBINARY)
     @Column(name = "vendor_Uploaded_Document", columnDefinition = "LONGBLOB")
     private byte[] vendorUploadedDocument;
 
@@ -58,5 +53,18 @@ import org.hibernate.annotations.Type;
     @Column(name = "vendor_attribute_values")
     private ArrayList<String> vendorAttirbuteValue;
 
+    @Lob
+    @Column(name = "vendor_uploaded_image", columnDefinition = "TEXT")
+    private String vendorUploadedImage;
 
+    @Column(name = "vendor_upload_image_path_key")
+    private String vendorUploadImagePathKey;
+
+    @Column(name = "vendor_upload_document_path_key")
+    private String vendorUploadDocumentPathKey;
+
+    @Column(name = "last_updated_on")
+    private Date lastUpdatedOn;
+    @Column(name = "last_updated_by")
+    private String lastUpdatedBy;
 }

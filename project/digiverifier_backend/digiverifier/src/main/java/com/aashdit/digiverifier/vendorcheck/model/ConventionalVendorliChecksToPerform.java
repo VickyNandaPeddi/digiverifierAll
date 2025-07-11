@@ -3,19 +3,16 @@
  */
 package com.aashdit.digiverifier.vendorcheck.model;
 
-import java.time.LocalDateTime;
-import java.util.Date;
-
-import javax.persistence.*;
-
 import com.aashdit.digiverifier.config.admin.model.User;
 import com.aashdit.digiverifier.config.admin.model.VendorChecks;
 import com.aashdit.digiverifier.config.superadmin.model.Source;
 import com.aashdit.digiverifier.config.superadmin.model.VendorCheckStatusMaster;
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+
+import java.util.Date;
 
 /**
  * @author ${Nanda Kishore}
@@ -27,7 +24,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Table(name = "t_dgv_conventional_vendorchecks_to_perform")
 public class ConventionalVendorliChecksToPerform {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long Id;
     @Column(name = "check_code")
@@ -77,9 +74,19 @@ public class ConventionalVendorliChecksToPerform {
 
     @Column(name = "source_name")
     private String sourceName;
+    @Column(name = "date_to_complete")
+    private String dateToComplete;
+    @Column(name = "stop_check")
+    private String stopCheck;
 
-//    @Column(name = "resubmitted")
-//    private String resubmitted;
+    @Column(name = "disabled")
+    private String disabled;
 
+    @Column(name = "last_updated_on")
+    private Date lastUpdatedOn;
+    @Column(name = "last_updated_by")
+    private String lastUpdatedBy;
 
+    @Column(name = "is_check_status_triggered")
+    private Boolean isCheckStatusTriggered;
 }

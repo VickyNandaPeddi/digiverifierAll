@@ -10,6 +10,6 @@ import lombok.Data;
 @Data
 public class SourceServiceListDto {
 
-	private Source source;
-	private List<ServiceSourceMaster> serviceSourceMaster;
+    private Source source;
+    private List<ServiceSourceMaster> serviceSourceMaster;
 }

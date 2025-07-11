@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en-us" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>DigiVerifier Pdf</title>
+    <meta charset="UTF-8"/>
+    <link th:href="${cssPath + '/common.css'}" rel="stylesheet"/>
+    <link th:href="@{https://fonts.googleapis.com/css?family=Calibri:400,700,400,700&display=swap}" rel="stylesheet"/>
+    <style>
+        .table-st {
+            clear: both;
+            width: 100%;
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+
+        .table-cell {
+            overflow: auto;
+            word-wrap: break-word;
+        }
+
+        .table-st tr {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+        }
+
+        .table-st tr td {
+            border: 1px solid #808080;
+            border-collapse: collapse;
+            padding: 10px;
+        }
+
+        .table-st tr td span {
+            margin-left: 5px;
+        }
+
+        .table-container {
+            page-break-inside: avoid; /* Prevent table from splitting across pages */
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .blue-bg {
+            background-color: #808080;
+        }
+
+        .grey-bg {
+            background-color: rgba(49, 119, 235, 0.8);
+        }
+
+        .black-heading {
+            color: black;
+            font-size: 15px !important;
+            font-weight: 700;
+            font-family: 'Calibri';
+        }
+
+        .white-heading {
+            color: #FFF;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 15pt;
+        }
+
+        .black-text {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 13pt;
+        }
+
+        .grey-text {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 12pt;
+        }
+
+        .white-text {
+            color: #fff;
+            font-weight: 700 !important;;
+            font-size: 13px;
+            font-family: 'Calibri';
+        }
+
+        .line-break {
+            display: block;
+            height: 15px;
+        }
+
+        .green-status {
+            margin: 0px;
+            color: #008000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+
+        .amber-status {
+            margin: 0px;
+            color: #ffA500;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+
+        .red-status {
+            margin: 0px;
+            color: #ff0000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+
+        .invalid-status {
+            margin: 0px;
+            color: #000000;
+            font-weight: 700;
+            font-family: 'Calibri';
+            font-size: 13px;
+        }
+
+        .black-box {
+            border: 1px solid black;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .color-container {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .box {
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            background-color: transparent; /* Set the desired background color */
+            display: inline-block;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .amber {
+            background-color: #ffA500;;
+        }
+
+        .yellow {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body style="background-color:#fff;padding:0px;margin:0px;position:relative;font-family: 'Calibri', sans-serif;color:#666666;">
+<section class="wrapper" style="width:100%;margin:0 auto;height:80%;">
+    <!--  Uan checks with proofs starts-->
+    <table class="table-st employer-name-verification" border="0">
+        <div class="text-center">
+            <div>
+                <br>
+                <span style="color: black; font-family:Calibri, sans-serif; font-style: normal; font-weight: bold; font-size: 14pt;"
+                      th:text="${root.agentUploadedChecks.source.sourceName}"
+                ></span>
+                <span class="line-break"></span>
+                <tr>
+                    <td class="grey-bg text-center white-heading"
+                        style="width: 30%; padding: 5px;">
+                        Particular
+                    </td>
+                    <td class="grey-bg text-center white-heading"
+                        style="width: 70%; padding: 5px;">
+                        Remarks
+                    </td>
+                </tr>
+                <tr>
+                    <td class="black-text text-left" style="width: 30%; padding: 5px;">
+                        Check Status
+                    </td>
+                    <td class="grey-bg text-center white-heading"
+                        style="width: 70%; padding: 5px;" th:style="${root.agentUploadedChecks.colorCode.equalsIgnoreCase('CLEAR') ? 'background-color: #74B72E'
+										        : root.agentUploadedChecks.colorCode.equalsIgnoreCase('UNABLETOVERIFY') ? 'background-color: orange'
+										        : (root.agentUploadedChecks.colorCode.equalsIgnoreCase('MINORDISCREPANCY')) ? 'background-color: rgba(226, 29, 68)'
+										        : ''}">
+
+                                          <span class="black-text" th:text="${root.agentUploadedChecks.colorCode.equalsIgnoreCase('CLEAR') ? 'GREEN'
+										        : root.agentUploadedChecks.colorCode.equalsIgnoreCase('UNABLETOVERIFY') ? 'AMBER'
+										        : (root.agentUploadedChecks.colorCode.equalsIgnoreCase('MINORDISCREPANCY')) ? 'RED'
+										        : root.agentUploadedChecks.colorCode}">
+										    </span>
+                    </td>
+                </tr>
+                <tr
+                    th:if="${not #lists.isEmpty(root.agentUploadedChecks)}">
+                    <td class="black-text text-left" style="padding: 5px;">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;"
+                             >Remarks</span>
+                    </td>
+                    <td class="black-text text-left" style="padding: 5px;">
+                        <span class="black-text text-left" style="font-size: 18px;font-weight: bold;"
+                              th:text="${root.agentUploadedChecks.remarks}"></span>
+                    </td>
+
+                </tr>
+            </div>
+        </div>
+    </table>
+    <br>
+
+</section>
+</body>
+</html>

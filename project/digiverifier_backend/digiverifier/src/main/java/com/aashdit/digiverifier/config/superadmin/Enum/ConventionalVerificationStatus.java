@@ -7,5 +7,5 @@ public enum ConventionalVerificationStatus {
     MAJORDISCREPANCY,
     MINORDISCREPANCY,
     UNABLETOVERIFIY,
-        NAN
+    NAN
 }

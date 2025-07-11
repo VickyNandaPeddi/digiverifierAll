@@ -1,9 +1,9 @@
 package com.aashdit.digiverifier.config.candidate.model;
 
 
+import jakarta.persistence.*;
 import lombok.Data;
 
-import javax.persistence.*;
 import java.util.Date;
 
 @Data
@@ -16,13 +16,13 @@ public class ConventionalCandidateDrugInfo {
     private Long drugId;
 
     @Column(name = "conventional_candidate_id")
-    private Long conventionalCandidateId;
+    private String conventionalCandidateId;
 
     @Column(name = "conventional_requestid")
     private Long conventionalRequestId;
 
     @Column(name = "candidate_id")
-    private Long candidateId;
+    private String candidateId;
 
 
     @Column(name = "name")
@@ -42,7 +42,7 @@ public class ConventionalCandidateDrugInfo {
     @Column(name = "house_number")
     private String houseNumber;
 
-    @Column(name = "street_address",length = 3000)
+    @Column(name = "street_address", length = 3000)
     private String streetAddress;
 
     @Column(name = "city")
@@ -57,7 +57,7 @@ public class ConventionalCandidateDrugInfo {
     @Column(name = "pincode")
     private String pincode;
 
-    @Column(name = "prominent_landmark",length = 3000)
+    @Column(name = "prominent_landmark", length = 3000)
     private String prominentLandmark;
 
     @Column(name = "created_on")

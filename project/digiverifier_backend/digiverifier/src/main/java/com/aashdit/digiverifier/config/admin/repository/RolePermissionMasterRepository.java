@@ -8,8 +8,8 @@ import com.aashdit.digiverifier.config.admin.model.RolePermissionMaster;
 
 public interface RolePermissionMasterRepository extends JpaRepository<RolePermissionMaster, Long> {
 
-	List<RolePermissionMaster> findAllByIsActiveTrue();
+    List<RolePermissionMaster> findAllByIsActiveTrue();
 
-	List<RolePermissionMaster> findAllByRolePermissionHeadPermissionHeadIdAndIsActiveTrue(Long permissionHeadId);
+    List<RolePermissionMaster> findAllByRolePermissionHeadPermissionHeadIdAndIsActiveTrue(Long permissionHeadId);
 
 }

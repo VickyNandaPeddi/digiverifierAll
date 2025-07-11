@@ -7,15 +7,15 @@ import lombok.Data;
 
 @Data
 public class IDVerificationDTO {
-	
-	private String iDtype;
-	
-	private String name;
-	
-	private String idNo;
-	
-	private SourceEnum sourceEnum;
-	
-	private VerificationStatus verificationStatus;
+
+    private String iDtype;
+
+    private String name;
+
+    private String idNo;
+
+    private SourceEnum sourceEnum;
+
+    private VerificationStatus verificationStatus;
 
 }

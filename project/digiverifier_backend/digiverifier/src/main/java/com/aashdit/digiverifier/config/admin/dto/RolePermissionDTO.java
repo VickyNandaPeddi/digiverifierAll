@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 public class RolePermissionDTO {
-	
-	private List<Long> permissionId;
-	private Long roleId;
+
+    private List<Long> permissionId;
+    private Long roleId;
 
 }

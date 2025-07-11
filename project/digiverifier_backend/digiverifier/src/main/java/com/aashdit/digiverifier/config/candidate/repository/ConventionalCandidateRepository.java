@@ -13,7 +13,7 @@ public interface ConventionalCandidateRepository extends JpaRepository<Conventio
     ConventionalCandidate existsByConventionalCandidateId(Long conventionalCandidateId);
 
 
-    ConventionalCandidate findByConventionalCandidateId(Long conventionalCandidateId);
+//    ConventionalCandidate findByConventionalCandidateId(Long conventionalCandidateId);
     ConventionalCandidate findByConventionalRequestId(Long conventionalRequestId);
 
 }

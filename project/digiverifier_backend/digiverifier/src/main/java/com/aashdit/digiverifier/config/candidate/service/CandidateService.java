@@ -1,39 +1,39 @@
 package com.aashdit.digiverifier.config.candidate.service;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-
+import com.aashdit.digiverifier.common.model.ServiceOutcome;
+import com.aashdit.digiverifier.config.admin.dto.VendorUploadChecksDto;
 import com.aashdit.digiverifier.config.candidate.dto.*;
 import com.aashdit.digiverifier.config.candidate.model.*;
+import com.aashdit.digiverifier.config.superadmin.dto.DashboardDto;
 import com.aashdit.digiverifier.vendorcheck.dto.FetchVendorConventionalCandidateDto;
 import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.aashdit.digiverifier.common.model.ServiceOutcome;
-import com.aashdit.digiverifier.config.superadmin.dto.DashboardDto;
-import com.aashdit.digiverifier.config.admin.dto.VendorUploadChecksDto;
-import com.aashdit.digiverifier.common.model.Content;
+import java.util.List;
 
 public interface CandidateService {
 
     ServiceOutcome<List> saveCandidateInformation(MultipartFile file);
 
-    ServiceOutcome<List> saveConventionalCandidateInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<List> saveConventionalCandidateInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, String message, HttpHeaders headers);
 
     ServiceOutcome<DashboardDto> getUploadDetailsStatusAndCountConventional(DashboardDto dashboardDto);
 
     ServiceOutcome<DashboardDto> findConvCandidateForInterimAndFinal(DashboardDto dashboardDto);
 
-    ServiceOutcome<List> saveConventionalCandidateDrugInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<DashboardDto> findConVendorStatusCount(DashboardDto dashboardDto);
 
-    ServiceOutcome<List> saveConventionalCandidateReferenceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<List> saveConventionalCandidateDrugInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1);
 
-    ServiceOutcome<List> saveConventionalCandidateExperienceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<List> saveConventionalCandidateReferenceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1);
 
-    ServiceOutcome<List> saveConventionalCandidateEducationalInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<List> saveConventionalCandidateExperienceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1);
 
-    ServiceOutcome<List> saveConventionalCandidateAddressInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto);
+    ServiceOutcome<List> saveConventionalCandidateEducationalInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1);
+
+    ServiceOutcome<List> saveConventionalCandidateAddressInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1);
 
     ServiceOutcome<DashboardDto> getAllCandidateList(DashboardDto dashboardDto);
 
@@ -112,7 +112,7 @@ public interface CandidateService {
 
     ServiceOutcome<List<StatusMaster>> getAllStatus();
 
-    ServiceOutcome<String> generateInterimReport(String candidateCode) throws FileNotFoundException, IOException;
+    ServiceOutcome<String> generateInterimReport(String candidateCode) throws Exception;
 
     ServiceOutcome<Candidate> saveIsUanSkipped(String candidateCode, String isUanSkipped);
 
@@ -146,4 +146,6 @@ public interface CandidateService {
 
 
     ServiceOutcome<ConventionalCReportApprovalDto> getVendorUploadChecksByCandidateId(String candidateCode);
+
+    ServiceOutcome<DashboardDto> findConVendorTotalCount(DashboardDto dashboardDto);
 }

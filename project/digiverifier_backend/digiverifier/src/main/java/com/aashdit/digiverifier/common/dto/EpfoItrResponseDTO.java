@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class EpfoItrResponseDTO {
 
-	private String code;
-	
-	private String status;
-	
-	private EpfoItrResponseData data;
-	
-	
+    private String code;
+
+    private String status;
+
+    private EpfoItrResponseData data;
+
+
 }

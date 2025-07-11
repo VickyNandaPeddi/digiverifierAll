@@ -5,10 +5,10 @@ import lombok.Data;
 @Data
 public class CandidateApprovalDto {
 
-	//String candidateId;
-	
-	Long criminalVerificationColorId;
-	
-	Long globalDatabseCaseDetailsColorId;
-	
+    //String candidateId;
+
+    Long criminalVerificationColorId;
+
+    Long globalDatabseCaseDetailsColorId;
+
 }

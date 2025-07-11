@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CandidateFileDto {
-	private Long id;
-	private byte[] document;
-	private String colorName;
+    private Long id;
+    private byte[] document;
+    private String colorName;
 }

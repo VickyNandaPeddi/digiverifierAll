@@ -9,14 +9,16 @@ import java.util.List;
 
 @Repository
 public interface ConventionalCandidateReferenceInfoRepository extends JpaRepository<ConventionalCandidateReferenceInfo, Long> {
-    Boolean existsByConventionalCandiateId(Long conventionalCandidateId);
+//    Boolean existsByConventionalCandiateId(Long conventionalCandidateId);
 
     Boolean existsByConventionalRequestId(Long conventionalRequestId);
 
-    List<ConventionalCandidateReferenceInfo> findByConventionalCandiateId(Long conventionalCandidateId);
+//    List<ConventionalCandidateReferenceInfo> findByConventionalCandiateId(Long conventionalCandidateId);
 
-    @Modifying
-    void deleteAllByConventionalCandiateId(Long conventionalCandidateId);
+    List<ConventionalCandidateReferenceInfo> findByConventionalRequestId(Long conventionalRequestId);
+
+//    @Modifying
+//    void deleteAllByConventionalCandiateId(Long conventionalCandidateId);
     @Modifying
     void deleteAllByConventionalRequestId(Long conventionalRequestID);
 }

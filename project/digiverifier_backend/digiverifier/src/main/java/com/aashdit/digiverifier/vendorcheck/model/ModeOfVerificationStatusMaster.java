@@ -1,12 +1,8 @@
 package com.aashdit.digiverifier.vendorcheck.model;
 
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 
 
 @Getter
@@ -15,6 +11,7 @@ import javax.persistence.Table;
 @Table(name = "t_dgv_conventional_mode_of_verification_master")
 public class ModeOfVerificationStatusMaster {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long modeTypeCode;
     private String modeOfVerification;
 }

@@ -1,14 +1,13 @@
 package com.aashdit.digiverifier.config.candidate.repository;
 
-import java.util.List;
-
+import com.aashdit.digiverifier.config.candidate.model.CandidateCafAddress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.aashdit.digiverifier.config.candidate.model.CandidateCafAddress;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface CandidateCafAddressRepository extends JpaRepository<CandidateCafAddress, Long> {
@@ -19,7 +18,7 @@ public interface CandidateCafAddressRepository extends JpaRepository<CandidateCa
     void deleteAllByCandidateCandidateId(Long candidateID);
 
 
-    List<CandidateCafAddress> findByCandidateCandidateId(String candidateId);
+//    List<CandidateCafAddress> findByCandidateCandidateId(String candidateId);
 
     CandidateCafAddress findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(String candidateCode, String serviceCode);
 

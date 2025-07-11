@@ -37,16 +37,20 @@ import com.aashdit.digiverifier.itr.repository.CanditateItrEpfoResponseRepositor
 import com.aashdit.digiverifier.itr.repository.ITRDataRepository;
 import com.aashdit.digiverifier.utils.*;
 import com.aashdit.digiverifier.vendorcheck.dto.FetchVendorConventionalCandidateDto;
+import com.aashdit.digiverifier.vendorcheck.model.ConventionalCandidateDocumentInfo;
 import com.aashdit.digiverifier.vendorcheck.model.ConventionalVendorCandidatesSubmitted;
 import com.aashdit.digiverifier.vendorcheck.model.ConventionalVendorliChecksToPerform;
-import com.aashdit.digiverifier.vendorcheck.repository.ConventionalCandidatesSubmittedRepository;
-import com.aashdit.digiverifier.vendorcheck.repository.ConventionalVendorCandidatesSubmittedRepository;
-import com.aashdit.digiverifier.vendorcheck.repository.LiCheckToPerformRepository;
+import com.aashdit.digiverifier.vendorcheck.model.LicheckHistory;
+import com.aashdit.digiverifier.vendorcheck.repository.*;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
@@ -70,18 +74,13 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import java.io.*;
 import java.nio.file.Files;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -94,7 +93,7 @@ import java.util.stream.IntStream;
 
 @Service
 @Slf4j
-public class CandidateServiceImpl<T> implements CandidateService, MessageSourceAware {
+public class CandidateServiceImpl implements CandidateService, MessageSourceAware {
 
 
     SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
@@ -133,6 +132,9 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     @Autowired
     private ConventionalCafCandidateEducationRepository conventionalCafCandidateEducationRepository;
+
+    @Autowired
+    private ConventionalCandidateCertificateInfoRepository conventionalCandidateCertificateInfoRepository;
 
     @Autowired
     private VendorChecksRepository vendorChecksRepository;
@@ -254,14 +256,14 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     @Autowired
     private ContentService contentService;
-
+    SimpleDateFormat dateFormater = new SimpleDateFormat("dd/MM/yyyy");
 
     @Transactional
     @Override
     public ServiceOutcome<List> saveCandidateInformation(MultipartFile file) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             RandomString rd = null;
             List<Candidate> candidates = null;
             List<CandidateStatus> candidateStatusList = new ArrayList<CandidateStatus>();
@@ -363,35 +365,348 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto
+            , String message, HttpHeaders headers) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
+        svcSearchResult.setOutcome(false);
+        User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
         try {
             log.info(" saveConventionalCandidateInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-//            log.info("Response from lICheck response TOKEN API " + icheckRepsonse);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-
             JSONObject obj1 = new JSONObject(message);
             if (obj1.isNull("liCandidateInformation") == false) {
+                log.info("inside candidate information");
                 JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
                 if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                    log.info("inside insuff false condition");
+                    if (liCandidateInformation.isNull("liCandidatePANInfo") == false) {
+                        JSONArray liCandidatePANInfo = liCandidateInformation.getJSONArray("liCandidatePANInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidatePANInfo.length()).mapToObj(index -> ((JSONObject) liCandidatePANInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "PANCARD");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInPAN"));
+                                    candidateIdItems.setIdNumber(candid.getString("PANNumber"));
+                                    String documentUrl = candid.getString("PanDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "PANCARD";
+                                    candidateIdItems.setIdType("PANCARD");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInPAN"));
+                                candidateIdItems.setIdNumber(candid.getString("PANNumber"));
+                                String documentUrl = candid.getString("PanDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "PANCARD";
+                                candidateIdItems.setIdType("PANCARD");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidatePassportInfo") == false) {
+                        JSONArray liCandidatePassportInfo = liCandidateInformation.getJSONArray("liCandidatePassportInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidatePassportInfo.length()).mapToObj(index -> ((JSONObject) liCandidatePassportInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "PASSPORT");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInPassport"));
+                                    candidateIdItems.setIdNumber(candid.getString("PassportNumber"));
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInPassport"));
+                                    candidateIdItems.setCountry(candid.getString("Country"));
+                                    candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                    candidateIdItems.setExpiryDate(candid.getString("ExpiryDate"));
+                                    String documentUrl = candid.getString("PassportDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "PASSPORT";
+                                    candidateIdItems.setIdType("PASSPORT");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInPassport"));
+                                candidateIdItems.setIdNumber(candid.getString("PassportNumber"));
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInPassport"));
+                                candidateIdItems.setCountry(candid.getString("Country"));
+                                candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                candidateIdItems.setExpiryDate(candid.getString("ExpiryDate"));
+                                String documentUrl = candid.getString("PassportDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "PASSPORT";
+                                candidateIdItems.setIdType("PASSPORT");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateVoterIDInfo") == false) {
+                        JSONArray liCandidateVoterIDInfo = liCandidateInformation.getJSONArray("liCandidateVoterIDInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateVoterIDInfo.length()).mapToObj(index -> ((JSONObject) liCandidateVoterIDInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "VOTERID");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInVoterID"));
+                                    candidateIdItems.setIdNumber(candid.getString("VoterIDNumber"));
+                                    String documentUrl = candid.getString("VoterIDDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "VOTERID";
+                                    candidateIdItems.setIdType("VOTERID");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInVoterID"));
+                                candidateIdItems.setIdNumber(candid.getString("VoterIDNumber"));
+                                String documentUrl = candid.getString("VoterIDDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "VOTERID";
+                                candidateIdItems.setIdType("VOTERID");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateDLInfo") == false) {
+                        JSONArray liCandidateDLInfo = liCandidateInformation.getJSONArray("liCandidateDLInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateDLInfo.length()).mapToObj(index -> ((JSONObject) liCandidateDLInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "DRIVINGLICENCE");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                    candidateIdItems.setIdNumber(candid.getString("DLNumber"));
+                                    String documentUrl = candid.getString("DLDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "DRIVINGLICENCE";
+                                    candidateIdItems.setIdType("DRIVINGLICENCE");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                candidateIdItems.setIdNumber(candid.getString("DLNumber"));
+                                String documentUrl = candid.getString("DLDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "DRIVINGLICENCE";
+                                candidateIdItems.setIdType("DRIVINGLICENCE");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateAadhaarInfo") == false) {
+                        JSONArray liCandidateAadhaarInfo = liCandidateInformation.getJSONArray("liCandidateAadhaarInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateAadhaarInfo.length()).mapToObj(index -> ((JSONObject) liCandidateAadhaarInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "AADHARCARD");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInAadhaar"));
+                                    candidateIdItems.setIdNumber(candid.getString("AadhaarNumber"));
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInAadhaar"));
+                                    String documentUrl = candid.getString("AadhaarDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "AADHARCARD";
+                                    candidateIdItems.setIdType("AADHARCARD");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInAadhaar"));
+                                candidateIdItems.setIdNumber(candid.getString("AadhaarNumber"));
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInAadhaar"));
+                                String documentUrl = candid.getString("AadhaarDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "AADHARCARD";
+                                candidateIdItems.setIdType("AADHARCARD");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("CVDocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("CVDocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "CVVALIDATION";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                    }
+                    if (liCandidateInformation.isNull("LOADocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("LOADocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "LOA";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                    }
+                    if (liCandidateInformation.isNull("GapAnalysisDocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("GapAnalysisDocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "GAPANALYSIS";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                    }
+                    if (liCandidateInformation.isNull("liCandidateEducationInfo") == false) {
+                        JSONArray liCandidateEducationInfo = liCandidateInformation.getJSONArray("liCandidateEducationInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateEducationInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEducationInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("EducationDocuments") == false) {
+                                    String documentUrl = candid.getString("EducationDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "EDUCATION" + candid.getString("DegreeType").trim().toLowerCase();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+                    if (liCandidateInformation.isNull("liCandidateEmploymentInfo") == false) {
+                        JSONArray liCandidateEmploymentInfo = liCandidateInformation.getJSONArray("liCandidateEmploymentInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateEmploymentInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEmploymentInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("EmploymentDocuments") == false) {
+                                    String documentUrl = candid.getString("EmploymentDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = candid.getString("EmploymentType").trim();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+                    if (liCandidateInformation.isNull("liCandidateCertificateInfo") == false) {
+                        JSONArray liCandidateCertificateInfo = liCandidateInformation.getJSONArray("liCandidateCertificateInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateCertificateInfo.length()).mapToObj(index -> ((JSONObject) liCandidateCertificateInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("ProfCertificateDocuments") == false) {
+                                    String documentUrl = candid.getString("ProfCertificateDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = candid.getString("Course_Name").trim();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+
                     if (liCandidateInformation.isNull("liCandidateBasicInfo") == false) {
                         JSONArray liCandidateBasicInfo = liCandidateInformation.getJSONArray("liCandidateBasicInfo");
                         List<JSONObject> collect = IntStream.range(0, liCandidateBasicInfo.length()).mapToObj(index -> ((JSONObject) liCandidateBasicInfo.get(index))).collect(Collectors.toList());
@@ -399,7 +714,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                             Candidate candidate1 = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                             if (candidate1 == null) {
                                 Candidate candidate = new Candidate();
-                                candidate.setConventionalCandidateId(obj1.getLong("CandidateID"));
+                                candidate.setConventionalCandidateId(obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID"));
                                 candidate.setConventionalRequestId(obj1.getLong("RequestID"));
                                 candidate.setCandidateName(obj1.getString("Name"));
                                 candidate.setCreatedBy(user);
@@ -408,20 +723,18 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                                 candidate.setEmailId(candid.getString("EmailID"));
                                 candidate.setContactNumber(candid.getString("PhoneNumber"));
                                 candidate.setOrganization(organizationRepository.findById(user.getOrganization().getOrganizationId()).get());
-//                            RandomString rd = new RandomString(12);
-//                            Candidate findByCandidateCode = candidateRepository.findByCandidateCode(rd.nextString());
-//                            if (findByCandidateCode != null) {
-//                                candidate1.setCandidateCode(String.valueOf(rd.nextString()));
-//                            } else {
-//                                candidate1.setCandidateCode(String.valueOf(rd.nextString()));
-//                            }
                                 Candidate savedCandidate = candidateRepository.save(candidate);
+                                if (savedCandidate.getCandidateId() != null) {
+                                    svcSearchResult.setOutcome(true);
+                                    log.info("saved candidate basic --" + savedCandidate.getCandidateId() + " updated outcome ---" + svcSearchResult.getOutcome());
+                                }
                             } else {
                                 log.info("candidate exists in candidate basic");
                             }
 
                             Candidate requestID = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                             ConventionalCandidate conventionalCandidate1 = conventionalCandidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
+                            ConventionalCandidate savedConventionalCandidate = null;
                             if (conventionalCandidate1 == null) {
                                 ConventionalCandidate conventionalCandidate = new ConventionalCandidate();
                                 conventionalCandidate.setConventionalCandidateId(requestID.getConventionalCandidateId());
@@ -436,108 +749,527 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                                 conventionalCandidate.setFatherName(candid.getString("FatherName"));
                                 conventionalCandidate.setFatherDateOfBirth(candid.getString("FatherDOB"));
                                 conventionalCandidate.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
-                                ConventionalCandidate savedConventionalCandidate = conventionalCandidateRepository.save(conventionalCandidate);
-                                Boolean existsByConventionalCandidateIdAddress = conventionCafAddressRepository.existsByConventionalRequestId(savedConventionalCandidate.getConventionalRequestId());
-                                Boolean existsByConventionalCandidateIdDrug = conventionalCandidateDrugInfoRepository.existsByConventionalRequestId(savedConventionalCandidate.getConventionalRequestId());
-                                Boolean existsByConventionalCandidateIdEducational = conventionalCafCandidateEducationRepository.existsByConventionalRequestId(savedConventionalCandidate.getConventionalRequestId());
-                                Boolean existsByConventionalCandidateIdExperience = conventionalCandidateExperienceRepository.existsByConventionalRequestId(savedConventionalCandidate.getConventionalRequestId());
-                                Boolean existsByConventionalCandidateIdReference = conventionalCandidateReferenceInfoRepository.existsByConventionalRequestId(savedConventionalCandidate.getConventionalRequestId());
-                                //checking the address info
-                                if (existsByConventionalCandidateIdAddress == true) {
-                                    log.info("caf address exist in with the conventional candidateid");
-                                } else {
-                                    saveConventionalCandidateAddressInformation(fetchVendorConventionalCandidateDto);
-                                }
-                                //checking the drug info by conventional candidate id
-                                if (existsByConventionalCandidateIdDrug == true) {
-                                    log.info("caf DRUG INFO exist in with the conventional candidateid");
-                                } else {
-                                    saveConventionalCandidateDrugInformation(fetchVendorConventionalCandidateDto);
-                                }
-                                //checking the educational information
-                                if (existsByConventionalCandidateIdEducational == true) {
-                                    log.info("caf education  exist in with the conventional candidateid");
-                                } else {
-                                    saveConventionalCandidateEducationalInformation(fetchVendorConventionalCandidateDto);
-                                }
-                                //checking the experience information
-                                if (existsByConventionalCandidateIdExperience == true) {
-                                    log.info("caf Experienece  exist in with the conventional candidateid");
-                                } else {
-                                    saveConventionalCandidateExperienceInformation(fetchVendorConventionalCandidateDto);
-                                }
-                                //checking the experience information
-                                if (existsByConventionalCandidateIdExperience == true) {
-                                    log.info("caf Experienece  exist in with the conventional candidateid");
-                                } else {
-                                    saveConventionalCandidateReferenceInformation(fetchVendorConventionalCandidateDto);
-                                }
+                                savedConventionalCandidate = conventionalCandidateRepository.save(conventionalCandidate);
                             }
-
-
+                            Boolean existsByConventionalCandidateIdAddress = conventionCafAddressRepository.existsByConventionalRequestId(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : savedConventionalCandidate.getConventionalRequestId());
+                            Boolean existsByConventionalCandidateIdDrug = conventionalCandidateDrugInfoRepository.existsByConventionalRequestId(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : savedConventionalCandidate.getConventionalRequestId());
+                            Boolean existsByConventionalCandidateIdEducational = conventionalCafCandidateEducationRepository.existsByConventionalRequestId(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : savedConventionalCandidate.getConventionalRequestId());
+                            Boolean existsByConventionalCandidateIdReference = conventionalCandidateReferenceInfoRepository.existsByConventionalRequestId(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : savedConventionalCandidate.getConventionalRequestId());
+                            Boolean existsByConventionalCandidateCertificateInfo = conventionalCandidateCertificateInfoRepository.existsByRequestId(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : savedConventionalCandidate.getConventionalRequestId());
+                            if (liCandidateInformation.isNull("liCandidateEmploymentInfo") == false) {
+                                JSONArray liCandidateEmploymentInfo = liCandidateInformation.getJSONArray("liCandidateEmploymentInfo");
+                                List<JSONObject> empCollect = IntStream.range(0, liCandidateEmploymentInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEmploymentInfo.get(index))).collect(Collectors.toList());
+                                empCollect.forEach(candidEmp -> {
+                                    String employmentType = candidEmp.getString("EmploymentType");
+                                    Boolean existsByConventionalCandidateIdExperience = conventionalCandidateExperienceRepository.existsByConventionalRequestIdAndEmploymentType(conventionalCandidate1 != null ? conventionalCandidate1.getConventionalRequestId() : obj1.getLong("RequestID"), employmentType);
+                                    //checking the experience information
+                                    if (existsByConventionalCandidateIdExperience == true) {
+                                        log.info("caf Experienece  exist in with the conventional candidateid");
+                                    } else {
+                                        saveConventionalCandidateExperienceInformation(fetchVendorConventionalCandidateDto, obj1);
+                                    }
+                                });
+                            }
+                            //checking the address info
+                            if (existsByConventionalCandidateIdAddress == true) {
+                                log.info("caf address exist in with the conventional candidateid");
+                            } else {
+                                saveConventionalCandidateAddressInformation(fetchVendorConventionalCandidateDto, obj1);
+                            }
+                            //checking the drug info by conventional candidate id
+                            if (existsByConventionalCandidateIdDrug == true) {
+                                log.info("caf DRUG INFO exist in with the conventional candidateid");
+                            } else {
+                                saveConventionalCandidateDrugInformation(fetchVendorConventionalCandidateDto, obj1);
+                            }
+                            //checking the educational information
+                            if (existsByConventionalCandidateIdEducational == true) {
+                                log.info("caf education  exist in with the conventional candidateid");
+                            } else {
+                                saveConventionalCandidateEducationalInformation(fetchVendorConventionalCandidateDto, obj1);
+                            }
+                            //checking the referece information
+                            if (existsByConventionalCandidateIdReference == true) {
+                                log.info("caf Experienece  exist in with the conventional candidateid");
+                            } else {
+                                saveConventionalCandidateReferenceInformation(fetchVendorConventionalCandidateDto, obj1);
+                            }
+                            //checking the certificate information
+                            if (existsByConventionalCandidateCertificateInfo == true) {
+                                log.info("ConventionalCandidateCertificateInfo exist in with the conventional candidateid");
+                            } else {
+                                saveConventionalCandidateCertificateInformation(fetchVendorConventionalCandidateDto, obj1);
+                            }
                         });
                     }
                 } else {
-
-
                     log.info(" saveConventionalCandidateInformation()  insufficiency");
+                    if (liCandidateInformation.isNull("liCandidatePANInfo") == false) {
+                        JSONArray liCandidatePANInfo = liCandidateInformation.getJSONArray("liCandidatePANInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidatePANInfo.length()).mapToObj(index -> ((JSONObject) liCandidatePANInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "PANCARD");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInPAN"));
+                                    candidateIdItems.setIdNumber(candid.getString("PANNumber"));
+                                    String documentUrl = candid.getString("PanDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "PANCARD";
+                                    candidateIdItems.setIdType("PANCARD");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInPAN"));
+                                candidateIdItems.setIdNumber(candid.getString("PANNumber"));
+                                String documentUrl = candid.getString("PanDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "PANCARD";
+                                candidateIdItems.setIdType("PANCARD");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
 
-                    saveConventionalCandidateAddressInformation(fetchVendorConventionalCandidateDto);
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidatePassportInfo") == false) {
+                        JSONArray liCandidatePassportInfo = liCandidateInformation.getJSONArray("liCandidatePassportInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidatePassportInfo.length()).mapToObj(index -> ((JSONObject) liCandidatePassportInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "PASSPORT");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInPassport"));
+                                    candidateIdItems.setIdNumber(candid.getString("PassportNumber"));
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInPassport"));
+                                    candidateIdItems.setCountry(candid.getString("Country"));
+                                    candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                    candidateIdItems.setExpiryDate(candid.getString("ExpiryDate"));
+                                    String documentUrl = candid.getString("PassportDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "PASSPORT";
+                                    candidateIdItems.setIdType("PASSPORT");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInPassport"));
+                                candidateIdItems.setIdNumber(candid.getString("PassportNumber"));
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInPassport"));
+                                candidateIdItems.setCountry(candid.getString("Country"));
+                                candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                candidateIdItems.setExpiryDate(candid.getString("ExpiryDate"));
+                                String documentUrl = candid.getString("PassportDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "PASSPORT";
+                                candidateIdItems.setIdType("PASSPORT");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateVoterIDInfo") == false) {
+                        JSONArray liCandidateVoterIDInfo = liCandidateInformation.getJSONArray("liCandidateVoterIDInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateVoterIDInfo.length()).mapToObj(index -> ((JSONObject) liCandidateVoterIDInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "VOTERID");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInVoterID"));
+                                    candidateIdItems.setIdNumber(candid.getString("VoterIDNumber"));
+                                    String documentUrl = candid.getString("VoterIDDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "VOTERID";
+                                    candidateIdItems.setIdType("VOTERID");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInVoterID"));
+                                candidateIdItems.setIdNumber(candid.getString("VoterIDNumber"));
+                                String documentUrl = candid.getString("VoterIDDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "VOTERID";
+                                candidateIdItems.setIdType("VOTERID");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateDLInfo") == false) {
+                        JSONArray liCandidateDLInfo = liCandidateInformation.getJSONArray("liCandidateDLInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateDLInfo.length()).mapToObj(index -> ((JSONObject) liCandidateDLInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "DRIVINGLICENCE");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                    candidateIdItems.setIdNumber(candid.getString("DLNumber"));
+                                    String documentUrl = candid.getString("DLDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "DRIVINGLICENCE";
+                                    candidateIdItems.setIdType("DRIVINGLICENCE");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderIssueDate(candid.getString("DateOfIssue"));
+                                candidateIdItems.setIdNumber(candid.getString("DLNumber"));
+                                String documentUrl = candid.getString("DLDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "DRIVINGLICENCE";
+                                candidateIdItems.setIdType("DRIVINGLICENCE");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("liCandidateAadhaarInfo") == false) {
+                        JSONArray liCandidateAadhaarInfo = liCandidateInformation.getJSONArray("liCandidateAadhaarInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateAadhaarInfo.length()).mapToObj(index -> ((JSONObject) liCandidateAadhaarInfo.get(index))).collect(Collectors.toList());
+                        collect.forEach(candid -> {
+
+                            List<CandidateIdItems> byRequestIdAndIdType = candidateIdItemsRepository.findByRequestIdAndIdType(obj1.getString("RequestID"), "AADHARCARD");
+                            if (byRequestIdAndIdType.isEmpty() == false) {
+                                byRequestIdAndIdType.forEach(candidateIdItems -> {
+                                    candidateIdItems.setCreatedOn(new Date());
+                                    candidateIdItems.setIdHolderName(candid.getString("NameInAadhaar"));
+                                    candidateIdItems.setIdNumber(candid.getString("AadhaarNumber"));
+                                    candidateIdItems.setIdHolderDob(candid.getString("DOBInAadhaar"));
+                                    String documentUrl = candid.getString("AadhaarDocument");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                    candidateIdItems.setRequestId(String.valueOf(requestID));
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "AADHARCARD";
+                                    candidateIdItems.setIdType("AADHARCARD");
+                                    log.info("Document saved for " + documentKeyName);
+                                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                    candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                    CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                                });
+                            } else {
+                                CandidateIdItems candidateIdItems = new CandidateIdItems();
+                                candidateIdItems.setCreatedOn(new Date());
+                                candidateIdItems.setIdHolderName(candid.getString("NameInAadhaar"));
+                                candidateIdItems.setIdNumber(candid.getString("AadhaarNumber"));
+                                candidateIdItems.setIdHolderDob(candid.getString("DOBInAadhaar"));
+                                String documentUrl = candid.getString("AadhaarDocument");
+                                String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                Long requestID = obj1.getLong("RequestID");
+                                candidateIdItems.setCandidateId(String.valueOf(candidateID));
+                                candidateIdItems.setRequestId(String.valueOf(requestID));
+                                HttpEntity<String> entity = new HttpEntity<>(headers);
+                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                String documentKeyName = "AADHARCARD";
+                                candidateIdItems.setIdType("AADHARCARD");
+                                log.info("Document saved for " + documentKeyName);
+                                ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                                candidateIdItems.setDocumentId(String.valueOf(conventionalCandidateDocumentInfo.getDocId()));
+                                CandidateIdItems save = candidateIdItemsRepository.save(candidateIdItems);
+
+                            }
+                        });
+                    }
+                    if (liCandidateInformation.isNull("CVDocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("CVDocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "CVVALIDATION";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                    }
+                    if (liCandidateInformation.isNull("LOADocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("LOADocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "LOA";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                    }
+                    if (liCandidateInformation.isNull("GapAnalysisDocuments") == false) {
+                        String documentUrl = liCandidateInformation.getString("GapAnalysisDocuments");
+                        String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                        Long requestID = obj1.getLong("RequestID");
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                        String documentKeyName = "GAPANALYSIS";
+                        log.info("Document saved for " + documentKeyName);
+                        saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+                    }
+                    if (liCandidateInformation.isNull("liCandidateEducationInfo") == false) {
+                        JSONArray liCandidateEducationInfo = liCandidateInformation.getJSONArray("liCandidateEducationInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateEducationInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEducationInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") != false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("EducationDocuments") == false) {
+                                    String documentUrl = candid.getString("EducationDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = "EDUCATION" + candid.getString("DegreeType").trim().toLowerCase();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+                    if (liCandidateInformation.isNull("liCandidateEmploymentInfo") == false) {
+                        JSONArray liCandidateEmploymentInfo = liCandidateInformation.getJSONArray("liCandidateEmploymentInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateEmploymentInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEmploymentInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("EmploymentDocuments") == false) {
+                                    String documentUrl = candid.getString("EmploymentDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = candid.getString("EmploymentType").trim();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+
+                    if (liCandidateInformation.isNull("liCandidateCertificateInfo") == false) {
+                        JSONArray liCandidateCertificateInfo = liCandidateInformation.getJSONArray("liCandidateCertificateInfo");
+                        List<JSONObject> collect = IntStream.range(0, liCandidateCertificateInfo.length()).mapToObj(index -> ((JSONObject) liCandidateCertificateInfo.get(index))).collect(Collectors.toList());
+                        if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                            collect.forEach(candid -> {
+                                if (candid.isNull("ProfCertificateDocuments") == false) {
+                                    String documentUrl = candid.getString("ProfCertificateDocuments");
+                                    String candidateID = obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID");
+                                    Long requestID = obj1.getLong("RequestID");
+                                    HttpEntity<String> entity = new HttpEntity<>(headers);
+                                    ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+                                    String documentKeyName = candid.getString("Course_Name").trim();
+                                    log.info("Document saved for " + documentKeyName);
+                                    saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+                                }
+                            });
+                        }
+                    }
+
+                    saveConventionalCandidateAddressInformation(fetchVendorConventionalCandidateDto, obj1);
 //                //checking the drug info by conventional candidate id
-                    saveConventionalCandidateDrugInformation(fetchVendorConventionalCandidateDto);
+                    saveConventionalCandidateDrugInformation(fetchVendorConventionalCandidateDto, obj1);
                     //checking the educational information
-                    saveConventionalCandidateEducationalInformation(fetchVendorConventionalCandidateDto);
+                    saveConventionalCandidateEducationalInformation(fetchVendorConventionalCandidateDto, obj1);
 //                //checking the experience information
-                    saveConventionalCandidateExperienceInformation(fetchVendorConventionalCandidateDto);
-//                //checking the experience information
-                    saveConventionalCandidateReferenceInformation(fetchVendorConventionalCandidateDto);
+                    saveConventionalCandidateExperienceInformation(fetchVendorConventionalCandidateDto, obj1);
+//                //checking the reference information
+                    saveConventionalCandidateReferenceInformation(fetchVendorConventionalCandidateDto, obj1);
+
+                    saveConventionalCandidateCertificateInformation(fetchVendorConventionalCandidateDto, obj1);
                 }
 
             }
 
             svcSearchResult.setMessage("saved ConventionalCandidate");
-            svcSearchResult.setOutcome(true);
-//            svcSearchResult.setData(List.of(collect));
             svcSearchResult.setStatus("true");
 
         } catch (Exception e) {
+            log.error("in Saveconventional canidate basic" + e.getMessage());
             svcSearchResult.setMessage(e.getMessage().toString());
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saved ConventionalCandidate ends()");
+        log.debug("saved ConventionalCandidate ends()");
         return svcSearchResult;
 
     }
 
+    @Autowired
+    private AwsUtils awsUtils;
+    public static final String DIGIVERIFIER_DOC_BUCKET_NAME = "digiverifier-new";
+    @Autowired
+    ConventionalCandidateDocumentInfoRepository conventionalCandidateDocumentInfoRepository;
+
+    public ConventionalCandidateDocumentInfo saveConventionalDocuments(ResponseEntity<Object[]> response, Long requestId, String
+            candidateId, String documentKeyName, boolean resubmit) {
+        ConventionalCandidateDocumentInfo save = null;
+        try {
+            for (Object document : response.getBody()) {
+                String documentName = ((java.util.LinkedHashMap) document).get("DocumentName").toString();
+                if (resubmit == true) {
+                    documentName = documentName + "Resubmitted";
+                }
+                String updatedDocumentKeyname = documentKeyName + "/" + documentName;
+                String fileType = ((java.util.LinkedHashMap) document).get("FileType").toString();
+                String documentAttachment = ((java.util.LinkedHashMap) document).get("DocumentAttachment").toString();
+                ConventionalCandidateDocumentInfo byDocumentUrlAndRequestId = conventionalCandidateDocumentInfoRepository.findByDocumentUrlAndRequestId(updatedDocumentKeyname, String.valueOf(requestId));
+                if (byDocumentUrlAndRequestId != null) {
+                    if (byDocumentUrlAndRequestId.isResubmitted() == false) {
+                        byDocumentUrlAndRequestId.setCandidateId(String.valueOf(candidateId));
+                        byDocumentUrlAndRequestId.setDocumentName(documentName);
+                        byDocumentUrlAndRequestId.setFileType(fileType);
+                        if (resubmit == true) {
+                            byDocumentUrlAndRequestId.setResubmitted(true);
+                            log.debug("resubmit document files");
+                        } else {
+                            byDocumentUrlAndRequestId.setResubmitted(false);
+                        }
+                        String contentType = "";
+                        if (documentKeyName.contains(".pdf")) {
+                            contentType = "application/pdf";
+                        } else if (documentKeyName.contains(".png")) {
+                            contentType = "image/png";
+                        }
+                        ObjectMetadata metadata = new ObjectMetadata();
+                        metadata.setContentType(contentType);
+                        byDocumentUrlAndRequestId.setRequestID(String.valueOf(requestId));
+                        // Convert the base64-encoded attachment to a byte array
+                        byte[] fileContent = java.util.Base64.getDecoder().decode(documentAttachment);
+                        String filekey = "Candidate/Convetional/" + requestId + "/" + updatedDocumentKeyname;
+                        String s = awsUtils.uploadFileAndGetPresignedUrl_bytes(DIGIVERIFIER_DOC_BUCKET_NAME, filekey, fileContent, metadata);
+//                        log.info("precisedUrl" + s);
+                        byDocumentUrlAndRequestId.setDocumentUrl(filekey);
+                        byDocumentUrlAndRequestId.setCreatedOn(new Date());
+                        User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
+                        if (user != null) {
+                            byDocumentUrlAndRequestId.setCreatedBy(user);
+                        }
+                        save = conventionalCandidateDocumentInfoRepository.save(byDocumentUrlAndRequestId);
+//                        log.info("candidate document path key" + save.getDocumentUrl());
+                    }
+                } else {
+                    ConventionalCandidateDocumentInfo conventionalCandidateDocumentInfo = new ConventionalCandidateDocumentInfo();
+                    conventionalCandidateDocumentInfo.setCandidateId(String.valueOf(candidateId));
+                    conventionalCandidateDocumentInfo.setDocumentName(documentName);
+                    conventionalCandidateDocumentInfo.setFileType(fileType);
+                    conventionalCandidateDocumentInfo.setResubmitted(false);
+                    conventionalCandidateDocumentInfo.setRequestID(String.valueOf(requestId));
+                    if (resubmit == true) {
+                        conventionalCandidateDocumentInfo.setResubmitted(true);
+                        log.debug("resubmit document files");
+                    } else {
+                        conventionalCandidateDocumentInfo.setResubmitted(false);
+                    }
+                    String contentType = "";
+                    if (documentKeyName.contains(".pdf")) {
+                        contentType = "application/pdf";
+                        log.debug("application.pdf");
+
+                    } else if (documentKeyName.contains(".png")) {
+                        contentType = "image/png";
+                    }
+                    ObjectMetadata metadata = new ObjectMetadata();
+                    metadata.setContentType(contentType);
+                    // Convert the base64-encoded attachment to a byte array
+                    byte[] fileContent = java.util.Base64.getDecoder().decode(documentAttachment);
+                    String filekey = "Candidate/Convetional/" + requestId + "/" + updatedDocumentKeyname;
+                    String s = awsUtils.uploadFileAndGetPresignedUrl_bytes(DIGIVERIFIER_DOC_BUCKET_NAME, filekey, fileContent, metadata);
+//                    log.info("precisedUrl" + s);
+                    conventionalCandidateDocumentInfo.setDocumentUrl(filekey);
+                    conventionalCandidateDocumentInfo.setCreatedOn(new Date());
+                    User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
+                    if (user != null) {
+                        conventionalCandidateDocumentInfo.setCreatedBy(user);
+                    }
+                    save = conventionalCandidateDocumentInfoRepository.save(conventionalCandidateDocumentInfo);
+//                    log.info("candidate document path key" + save.getDocumentUrl());
+                }
+            }
+        } catch (
+                Exception e) {
+            log.error(e.getMessage());
+
+        }
+        return save;
+    }
+
 
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateAddressInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateAddressInformation
+            (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            log.info("saveConventionalCandidateAddressInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-//            FetchVendorConventionalCandidateDto FetchVendorConventionalCandidateDto = new FetchVendorConventionalCandidateDto("16582", "1080877", " ", "2CDC7E3A");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-//            log.info("Response from lICheck response TOKEN API " + icheckRepsonse);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-            JSONObject obj1 = new JSONObject(message);
+            log.debug("saveConventionalCandidateAddressInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
             if (liCandidateInformation.isNull("liCandidateAddressInfo") == false) {
                 JSONArray liCandidateAddressInfo = liCandidateInformation.getJSONArray("liCandidateAddressInfo");
@@ -551,53 +1283,59 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         CandidateCafAddress candidateCafAddress = new CandidateCafAddress();
                         candidateCafAddress.setCandidate(byConventionalCandidateId);
                         candidateCafAddress.setState(candid.getString("State"));
-                        candidateCafAddress.setPinCode(Integer.parseInt(candid.getString("PinCode")));
+                        candidateCafAddress.setPinCode(candid.getString("PinCode"));
                         candidateCafAddress.setCity(candid.getString("City"));
                         candidateCafAddress.setCreatedOn(new Date());
-                        candidateCafAddress.setCandidateAddress(candid.getString("HouseNumber") + "," + candid.getString("StreetAddress") + "," + candid.getString("City") + "," + candid.getString("State") + "" + candid.getString("Country") + "," + candid.getString("ProminentLandmark"));
+                        candidateCafAddress.setCandidateAddress(candid.getString("HouseNumber") + "," + candid.getString("StreetAddress") + "," + candid.getString("City") + "," + candid.getString("State") + "," + candid.getString("Country") + "," + candid.getString("ProminentLandmark") + "" + candid.getString("PinCode"));
                         CandidateCafAddress saveCandidateCafAddress = candidateCafAddressRepository.save(candidateCafAddress);
                         //setting the other fields not present in candidateaddress table to conventional caniddateaddress
                         ConventionalCafAddress conventionalCafAddress = new ConventionalCafAddress();
                         conventionalCafAddress.setConventionalRequestId(obj1.getLong("RequestID"));
-                        conventionalCafAddress.setConventionalCandidateId(obj1.getLong("CandidateID"));
+                        conventionalCafAddress.setConventionalCandidateId(obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID"));
                         conventionalCafAddress.setCandidateCafAddressId(saveCandidateCafAddress.getCandidateCafAddressId());
                         conventionalCafAddress.setAddressType(candid.getString("AddressType"));
                         conventionalCafAddress.setContactInfo(candid.getString("ContactInfo"));
                         conventionalCafAddress.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
                         conventionalCafAddress.setHouseType(candid.getString("HouseType"));
-                        conventionalCafAddress.setStayFromDate(new Date(candid.getString("StayFromDate")));
-                        conventionalCafAddress.setStayToDate(new Date(candid.getString("StayToDate")));
+                        try {
+                            conventionalCafAddress.setStayFromDate(dateFormater.parse(candid.getString("StayFromDate")));
+                            conventionalCafAddress.setStayToDate(dateFormater.parse(candid.getString("StayToDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
                         ConventionalCafAddress savedConventionalCafAddress = conventionCafAddressRepository.save(conventionalCafAddress);
-
-
                     });
                 } else {
-                    log.info("saveConventionalCandidateAddressInformation() insufficiency ");
+                    log.debug("saveConventionalCandidateAddressInformation() insufficiency ");
                     Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                     candidateCafAddressRepository.deleteAllByCandidateCandidateId(byConventionalCandidateId.getCandidateId());
-                    log.info("deleted the cafaddress by conventional candidate id");
+                    log.debug("deleted the cafaddress by conventional candidate id");
                     conventionCafAddressRepository.deleteAllByConventionalRequestId(obj1.getLong("RequestID"));
-                    log.info("deleted the conventional address by conventional candidate id");
+                    log.debug("deleted the conventional address by conventional candidate id");
                     collect.forEach(candid -> {
                         CandidateCafAddress candidateCafAddress = new CandidateCafAddress();
                         candidateCafAddress.setCandidate(byConventionalCandidateId);
                         candidateCafAddress.setState(candid.getString("State"));
-                        candidateCafAddress.setPinCode(Integer.parseInt(candid.getString("PinCode")));
+                        candidateCafAddress.setPinCode(candid.getString("PinCode"));
                         candidateCafAddress.setCity(candid.getString("City"));
                         candidateCafAddress.setCreatedOn(new Date());
                         candidateCafAddress.setCandidateAddress(candid.getString("HouseNumber") + "," + candid.getString("StreetAddress") + "," + candid.getString("City") + "," + candid.getString("State") + "" + candid.getString("Country") + "," + candid.getString("ProminentLandmark"));
                         CandidateCafAddress saveCandidateCafAddress = candidateCafAddressRepository.save(candidateCafAddress);
                         //setting the other fields not present in candidateaddress table to conventional caniddateaddress
                         ConventionalCafAddress conventionalCafAddress = new ConventionalCafAddress();
-                        conventionalCafAddress.setConventionalCandidateId(obj1.getLong("CandidateID"));
+                        conventionalCafAddress.setConventionalCandidateId(obj1.getString("CandidateID").isBlank() ? obj1.getString("PSNO") : obj1.getString("CandidateID"));
                         conventionalCafAddress.setConventionalRequestId(obj1.getLong("RequestID"));
                         conventionalCafAddress.setCandidateCafAddressId(saveCandidateCafAddress.getCandidateCafAddressId());
                         conventionalCafAddress.setAddressType(candid.getString("AddressType"));
                         conventionalCafAddress.setContactInfo(candid.getString("ContactInfo"));
                         conventionalCafAddress.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
                         conventionalCafAddress.setHouseType(candid.getString("HouseType"));
-                        conventionalCafAddress.setStayFromDate(new Date(candid.getString("StayFromDate")));
-                        conventionalCafAddress.setStayToDate(new Date(candid.getString("StayToDate")));
+                        try {
+                            conventionalCafAddress.setStayFromDate(dateFormater.parse(candid.getString("StayFromDate")));
+                            conventionalCafAddress.setStayToDate(dateFormater.parse(candid.getString("StayToDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
                         ConventionalCafAddress savedConventionalCafAddress = conventionCafAddressRepository.save(conventionalCafAddress);
                     });
 
@@ -616,42 +1354,34 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saveConventionalCandidateAddressInformation() ends");
+        log.debug("saveConventionalCandidateAddressInformation() ends");
         return svcSearchResult;
     }
 
 
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateEducationalInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateEducationalInformation
+            (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            log.info("saveConventionalCandidateEducationalInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-            JSONObject obj1 = new JSONObject(message);
+            log.debug("saveConventionalCandidateEducationalInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
             if (liCandidateInformation.isNull("liCandidateEducationInfo") == false) {
                 JSONArray liCandidateEducationInfo = liCandidateInformation.getJSONArray("liCandidateEducationInfo");
                 List<JSONObject> collect = IntStream.range(0, liCandidateEducationInfo.length()).mapToObj(index -> ((JSONObject) liCandidateEducationInfo.get(index))).collect(Collectors.toList());
                 if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
                     collect.forEach(candid -> {
+//                        if (candid.isNull("EducationDocuments") == false) {
+//                            String documentUrl = candid.getString("EducationDocuments");
+//                            log.info(documentUrl);
+//                            Long candidateID = obj1.getString("CandidateID").isBlank()?obj1.getLong("PSNO"): obj1.getLong("CandidateID");
+//                            Long requestID = obj1.getLong("RequestID");
+//                            HttpEntity<String> entity = new HttpEntity<>(headers);
+//                            ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+//                            String documentKeyName = "EDUCATION" + candid.getString("DegreeType").trim().toLowerCase();
+//                            saveConventionalDocuments(response, requestID, candidateID, documentKeyName, false);
+//                        }
                         Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                         //setting the candidateaddress details
                         CandidateCafEducation candidateCafEducation = new CandidateCafEducation();
@@ -661,6 +1391,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         candidateCafEducation.setYearOfPassing(candid.getString("MonthYearOfPassing"));
                         QualificationMaster bebtech = qualificationMasterRepository.findByQualificationCode("BEBTECH");
                         candidateCafEducation.setQualificationMaster(bebtech);
+                        candidateCafEducation.setQualificationType(candid.getString("QualificationType"));
+                        candidateCafEducation.setCountry(candid.getString("Country"));
                         CandidateStatus candidateStatus = new CandidateStatus();
                         candidateStatus.setCandidate(byConventionalCandidateId);
                         candidateStatus.setCreatedBy(user);
@@ -675,20 +1407,31 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         conventionalCandidateCafEducation.setCandidateCafEducationId(savedcafEducation.getCandidateCafEducationId());
                         conventionalCandidateCafEducation.setEducationType(candid.getString("EducationType"));
                         conventionalCandidateCafEducation.setDegreeType(candid.getString("DegreeType"));
-                        conventionalCandidateCafEducation.setStartDate(new Date(candid.getString("StartDate")));
+                        if (candid.isNull("IsSuspect") == false) {
+                            conventionalCandidateCafEducation.setIsSuspect(candid.getString("IsSuspect"));
+                        }
+                        if (candid.isNull("Reason_For_Suspect") == false) {
+                            conventionalCandidateCafEducation.setReasonForSuspect(candid.getString("Reason_For_Suspect"));
+                        }
                         conventionalCandidateCafEducation.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         conventionalCandidateCafEducation.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                        conventionalCandidateCafEducation.setEndDate(new Date(candid.getString("EndDate")));
+                        try {
+                            conventionalCandidateCafEducation.setStartDate(dateFormater.parse(candid.getString("StartDate")));
+                            conventionalCandidateCafEducation.setEndDate(dateFormater.parse(candid.getString("EndDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
                         conventionalCandidateCafEducation.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
                         ConventionalCandidateCafEducation savedConventionalCafEducational = conventionalCafCandidateEducationRepository.save(conventionalCandidateCafEducation);
+
                     });
                 } else {
-                    log.info("saveConventionalCandidateEducationalInformation() insufficiency Education");
+                    log.debug("saveConventionalCandidateEducationalInformation() insufficiency Education");
                     Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                     candidateCafEducationRepository.deleteAllByCandidateConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                    log.info("deleted the  caf education by conventional candidate id insufficeiency type");
+                    log.debug("deleted the  caf education by conventional candidate id insufficeiency type");
                     conventionalCafCandidateEducationRepository.deleteAllByConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                    log.info("deleted the Conventional  caf education by conventional candidate id insufficeiency type");
+                    log.debug("deleted the Conventional  caf education by conventional candidate id insufficeiency type");
                     collect.forEach(candid -> {
                         CandidateCafEducation candidateCafEducation = new CandidateCafEducation();
                         candidateCafEducation.setCandidate(byConventionalCandidateId);
@@ -706,20 +1449,42 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         CandidateStatus save = candidateStatusRepository.save(candidateStatus);
                         candidateCafEducation.setCandidateStatus(save);
                         candidateCafEducation.setCreatedOn(new Date());
-
+                        candidateCafEducation.setQualificationType(candid.getString("QualificationType"));
+                        candidateCafEducation.setCountry(candid.getString("Country"));
                         CandidateCafEducation savedcafEducation = candidateCafEducationRepository.save(candidateCafEducation);
                         //setting the other fields not present in candidateaddress table to conventional caniddateaddress
                         ConventionalCandidateCafEducation conventionalCandidateCafEducation = new ConventionalCandidateCafEducation();
                         conventionalCandidateCafEducation.setCandidateCafEducationId(savedcafEducation.getCandidateCafEducationId());
                         conventionalCandidateCafEducation.setEducationType(candid.getString("EducationType"));
                         conventionalCandidateCafEducation.setDegreeType(candid.getString("DegreeType"));
-                        conventionalCandidateCafEducation.setStartDate(new Date(candid.getString("StartDate")));
+                        if (candid.isNull("IsSuspect") == false) {
+                            conventionalCandidateCafEducation.setIsSuspect(candid.getString("IsSuspect"));
+                        }
+                        if (candid.isNull("Reason_For_Suspect") == false) {
+                            conventionalCandidateCafEducation.setReasonForSuspect(candid.getString("Reason_For_Suspect"));
+                        }
                         conventionalCandidateCafEducation.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         conventionalCandidateCafEducation.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                        conventionalCandidateCafEducation.setEndDate(new Date(candid.getString("EndDate")));
+                        try {
+                            conventionalCandidateCafEducation.setStartDate(dateFormater.parse(candid.getString("StartDate")));
+                            conventionalCandidateCafEducation.setEndDate(dateFormater.parse(candid.getString("EndDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
                         conventionalCandidateCafEducation.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
                         ConventionalCandidateCafEducation savedConventionalCafEducational = conventionalCafCandidateEducationRepository.save(conventionalCandidateCafEducation);
-                        log.info("added insufficiency data in conventional education and basic education");
+                        log.debug("added insufficiency data in conventional education and basic education");
+//                        if (candid.isNull("EducationDocuments") == false) {
+//                            String documentUrl = candid.getString("EducationDocuments");
+//                            log.info(documentUrl);
+//                            Long candidateID = obj1.getString("CandidateID").isBlank()?obj1.getLong("PSNO"): obj1.getLong("CandidateID");
+//                            Long requestID = obj1.getLong("RequestID");
+//                            HttpEntity<String> entity = new HttpEntity<>(headers);
+//                            ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+//                            String documentKeyName = "EDUCATION" + candid.getString("DegreeType").trim().toLowerCase();
+//                            saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+//                        }
+
                     });
                 }
 
@@ -735,36 +1500,18 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saveConventionalCandidateEducationalInformation() ends");
+        log.debug("saveConventionalCandidateEducationalInformation() ends");
         return svcSearchResult;
     }
 
     //this method is used for saveing the employment information
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateExperienceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateExperienceInformation
+    (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            log.info("saveConventionalCandidateExperienceInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-            JSONObject obj1 = new JSONObject(message);
+            log.debug("saveConventionalCandidateExperienceInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
             if (liCandidateInformation.isNull("liCandidateEmploymentInfo") == false) {
                 JSONArray liCandidateEmploymentInfo = liCandidateInformation.getJSONArray("liCandidateEmploymentInfo");
@@ -776,8 +1523,16 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         CandidateCafExperience candidateCafExperience = new CandidateCafExperience();
                         candidateCafExperience.setCandidate(byConventionalCandidateId);
                         candidateCafExperience.setCandidateEmployerName(candid.getString("CompanyName"));
-                        candidateCafExperience.setInputDateOfJoining(new Date(candid.getString("FromDate")));
-                        candidateCafExperience.setInputDateOfExit(new Date(candid.getString("ToDate")));
+                        if (candid.isNull("UAN_Number") == false) {
+                            candidateCafExperience.setUan(candid.getString("UAN_Number"));
+                        }
+                        try {
+                            candidateCafExperience.setInputDateOfJoining(dateFormater.parse(candid.getString("FromDate")));
+                            candidateCafExperience.setInputDateOfExit(dateFormater.parse(candid.getString("ToDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+
                         candidateCafExperience.setCreatedOn(new Date());
                         candidateCafExperience.setCandidateStatus(candidateStatusRepository.findByCandidateCandidateId(byConventionalCandidateId.getCandidateId()));
                         CandidateCafExperience savedcafExperience = candidateCafExperienceRepository.save(candidateCafExperience);
@@ -797,24 +1552,43 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         conventionalCandidateExperience.setSuperiorDesignation(candid.getString("SuperiorDesignation"));
                         conventionalCandidateExperience.setLastSalary(candid.getString("LastSalary"));
                         conventionalCandidateExperience.setGrossSalary(candid.getString("GrossSalary"));
+
                         conventionalCandidateExperience.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
+                        if (candid.isNull("IsSuspect") == false) {
+                            conventionalCandidateExperience.setIsSuspect(candid.getString("IsSuspect"));
+                        }
+                        if (candid.isNull("Office_Address") == false) {
+                            conventionalCandidateExperience.setOfficeAddress(candid.getString("Office_Address"));
+                        }
+                        if (candid.isNull("Reason_For_Suspect") == false) {
+                            conventionalCandidateExperience.setReasonForSuspect(candid.getString("Reason_For_Suspect"));
+                        }
                         conventionalCandidateExperience.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
                         conventionalCandidateExperience.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         ConventionalCandidateExperience savedConventionalCandidateExperience = conventionalCandidateExperienceRepository.save(conventionalCandidateExperience);
+
                     });
                 } else {
-                    log.info("saveConventionalCandidateExperienceInformation()  insufficiency");
+                    log.debug("saveConventionalCandidateExperienceInformation()  insufficiency");
                     Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                     candidateCafExperienceRepository.deleteAllByCandidateConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                    log.warn("delted candidate caf experience by conventional id for insufficiency");
+                    log.debug("delted candidate caf experience by conventional id for insufficiency");
                     conventionalCandidateExperienceRepository.deleteAllByConventionalRequestId(obj1.getLong("RequestID"));
-                    log.warn("delted conventional caf experience by conventional id for insufficiency");
+                    log.debug("delted conventional caf experience by conventional id for insufficiency");
                     collect.forEach(candid -> {
                         CandidateCafExperience candidateCafExperience = new CandidateCafExperience();
                         candidateCafExperience.setCandidate(byConventionalCandidateId);
                         candidateCafExperience.setCandidateEmployerName(candid.getString("CompanyName"));
-                        candidateCafExperience.setInputDateOfJoining(new Date(candid.getString("FromDate")));
-                        candidateCafExperience.setInputDateOfExit(new Date(candid.getString("ToDate")));
+                        if (candid.isNull("UAN_Number") == false) {
+                            candidateCafExperience.setUan(candid.getString("UAN_Number"));
+                        }
+                        try {
+                            candidateCafExperience.setInputDateOfJoining(dateFormater.parse(candid.getString("FromDate")));
+                            candidateCafExperience.setInputDateOfExit(dateFormater.parse(candid.getString("ToDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+
                         candidateCafExperience.setCreatedOn(new Date());
                         CandidateCafExperience savedcafExperience = candidateCafExperienceRepository.save(candidateCafExperience);
                         //setting the other fields not present in candidateaddress table to conventional caniddateaddress
@@ -834,13 +1608,32 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         conventionalCandidateExperience.setLastSalary(candid.getString("LastSalary"));
                         conventionalCandidateExperience.setGrossSalary(candid.getString("GrossSalary"));
                         conventionalCandidateExperience.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
+                        if (candid.isNull("IsSuspect") == false) {
+                            conventionalCandidateExperience.setIsSuspect(candid.getString("IsSuspect"));
+                        }
+                        if (candid.isNull("Office_Address") == false) {
+                            conventionalCandidateExperience.setOfficeAddress(candid.getString("Office_Address"));
+                        }
+                        if (candid.isNull("Reason_For_Suspect") == false) {
+                            conventionalCandidateExperience.setReasonForSuspect(candid.getString("Reason_For_Suspect"));
+                        }
+
                         conventionalCandidateExperience.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         conventionalCandidateExperience.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
                         ConventionalCandidateExperience savedConventionalCandidateExperience = conventionalCandidateExperienceRepository.save(conventionalCandidateExperience);
-                        log.info("new candidate experience for insufficency");
+                        log.debug("new candidate experience for insufficency");
+//                            if (candid.isNull("EmploymentDocuments") == false) {
+//                                String documentUrl = candid.getString("EmploymentDocuments");
+//                                System.out.println(documentUrl);
+//                                Long candidateID = obj1.getString("CandidateID").isBlank()?obj1.getLong("PSNO"): obj1.getLong("CandidateID");
+//                                Long requestID = obj1.getLong("RequestID");
+//                                HttpEntity<String> entity = new HttpEntity<>(headers);
+//                                ResponseEntity<Object[]> response = restTemplate.exchange(documentUrl, HttpMethod.POST, entity, Object[].class);
+//                                String documentKeyName = candid.getString("EmploymentType").trim();
+//                                saveConventionalDocuments(response, requestID, candidateID, documentKeyName, true);
+//                            }
                     });
                 }
-
                 svcSearchResult.setMessage("saved ConventionalCandidate Experience Data");
                 svcSearchResult.setOutcome(true);
                 svcSearchResult.setData(collect);
@@ -852,37 +1645,17 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saveConventionalCandidateExperienceInformation() ends");
+        log.debug("saveConventionalCandidateExperienceInformation() ends");
         return svcSearchResult;
     }
 
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateReferenceInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateReferenceInformation
+            (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            log.info("saveConventionalCandidateReferenceInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-//            FetchVendorConventionalCandidateDto FetchVendorConventionalCandidateDto = new FetchVendorConventionalCandidateDto("16582", "1080877", " ", "2CDC7E3A");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-//            log.info("Response from lICheck response TOKEN API " + icheckRepsonse);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-            JSONObject obj1 = new JSONObject(message);
+            log.debug("saveConventionalCandidateReferenceInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
             if (liCandidateInformation.isNull("liCandidateReferenceInfo") == false) {
                 JSONArray liCandidateEmploymentInfo = liCandidateInformation.getJSONArray("liCandidateReferenceInfo");
@@ -911,9 +1684,9 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                 } else {
                     Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
                     conventionalCandidateReferenceInfoRepository.deleteAllByConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                    log.warn("deleted the conventional reference info repository by convnetional candiadte id");
+                    log.debug("deleted the conventional reference info repository by convnetional candiadte id");
                     collect.forEach(candid -> {
-                        log.info("saveConventionalCandidateReferenceInformation() insufficiency");
+                        log.debug("saveConventionalCandidateReferenceInformation() insufficiency");
                         //setting the candidatereference  details
                         ConventionalCandidateReferenceInfo conventionalCandidateReference = new ConventionalCandidateReferenceInfo();
                         conventionalCandidateReference.setCandidateId(byConventionalCandidateId.getConventionalCandidateId());
@@ -929,7 +1702,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         conventionalCandidateReference.setInsufficiencyRemarks(candid.getString("Insufficiency_Remarks"));
                         conventionalCandidateReference.setConventionalCandiateId(byConventionalCandidateId.getConventionalCandidateId());
                         ConventionalCandidateReferenceInfo saveConventionalCandidateReference = conventionalCandidateReferenceInfoRepository.save(conventionalCandidateReference);
-                        log.info("added new conventional reference for insufficiency");
+                        log.debug("added new conventional reference for insufficiency");
                     });
                 }
                 svcSearchResult.setMessage("saved ConventionalCandidate Experience Data");
@@ -943,37 +1716,84 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saveConventionalCandidateReferenceInformation() ends");
+        log.debug("saveConventionalCandidateReferenceInformation() ends");
 
         return svcSearchResult;
     }
 
     @Transactional
-    public ServiceOutcome<List> saveConventionalCandidateDrugInformation(FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto) {
+    public ServiceOutcome<List> saveConventionalCandidateCertificateInformation
+            (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
         ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
         try {
-            log.info("saveConventionalCandidateDrugInformation() starts");
-            User user = SecurityHelper.getCurrentUser();
-            //To generate token first
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("grant_type", "password");
-            map.add("username", "Test@HelloVerify.com");
-            map.add("password", "LTI$test123#");
-            HttpHeaders tokenHeader = new HttpHeaders();
-            tokenHeader.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            ResponseEntity<String> responseEntity = null;
-            HttpEntity<MultiValueMap<String, String>> requestBodyFormUrlEncoded = new HttpEntity<>(map, tokenHeader);
-            responseEntity = restTemplate.postForEntity(environmentVal.getConventionalVendorToken(), requestBodyFormUrlEncoded, String.class);
-            JSONObject tokenObject = new JSONObject(responseEntity.getBody());
-            String access_token = tokenObject.getString("access_token");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + access_token);
-            headers.set("Content-Type", "application/json");
-            HttpEntity<FetchVendorConventionalCandidateDto> liCheckDtoHttpEntity = new HttpEntity<>(fetchVendorConventionalCandidateDto, headers);
-            ResponseEntity<String> icheckRepsonse = restTemplate.exchange(environmentVal.getConventionalVendorFetchVendorChecks(), HttpMethod.POST, liCheckDtoHttpEntity, String.class);
-//            log.info("Response from lICheck response TOKEN API " + icheckRepsonse);
-            String message = icheckRepsonse.getBody(); //.get("message").toString().replaceAll("=", ":")
-            JSONObject obj1 = new JSONObject(message);
+            log.debug("saveConventionalCandidateCertificateInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
+            JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
+            if (liCandidateInformation.isNull("liCandidateCertificateInfo") == false) {
+                JSONArray liCandidateCertificateInfo = liCandidateInformation.getJSONArray("liCandidateCertificateInfo");
+                List<JSONObject> collect = IntStream.range(0, liCandidateCertificateInfo.length()).mapToObj(index -> ((JSONObject) liCandidateCertificateInfo.get(index))).collect(Collectors.toList());
+                if (fetchVendorConventionalCandidateDto.getRequestType().equalsIgnoreCase("InsufficiencyClearance") == false) {
+                    collect.forEach(candid -> {
+
+                        Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
+                        //setting the candidatereference  details
+                        ConventionalCandidateCertificateInfo conventionalCandidateCertificateInfo = new ConventionalCandidateCertificateInfo();
+                        conventionalCandidateCertificateInfo.setRequestId(byConventionalCandidateId.getConventionalRequestId());
+                        conventionalCandidateCertificateInfo.setCourseName(candid.getString("Course_Name"));
+                        conventionalCandidateCertificateInfo.setCourseCompletionDate(candid.getString("Course_CompletionDate"));
+                        conventionalCandidateCertificateInfo.setCourseStartDate(candid.getString("Course_StartDate"));
+                        conventionalCandidateCertificateInfo.setCreatedBy(SecurityHelper.getCurrentUser().getUserName());
+                        conventionalCandidateCertificateInfo.setCreatedOn(new Date());
+                        conventionalCandidateCertificateInfo.setInstituteContactNumber(candid.getString("Institute_ContactNumber"));
+                        conventionalCandidateCertificateInfo.setInstituteName(candid.getString("Institute_Name"));
+                        conventionalCandidateCertificateInfo.setInstituteEmailID(candid.getString("Institute_EmailID"));
+                        ConventionalCandidateCertificateInfo savecCandidateCertificateInfo = conventionalCandidateCertificateInfoRepository.save(conventionalCandidateCertificateInfo);
+
+                    });
+                } else {
+                    Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
+                    conventionalCandidateCertificateInfoRepository.deleteAllByRequestId(byConventionalCandidateId.getConventionalRequestId());
+                    log.debug("deleted the conventional certificate info repository by convnetional candiadte id");
+                    collect.forEach(candid -> {
+                        log.debug("saveConventionalCandidateCertificateInformation() insufficiency");
+                        //setting the candidatereference  details
+                        ConventionalCandidateCertificateInfo conventionalCandidateCertificateInfo = new ConventionalCandidateCertificateInfo();
+                        conventionalCandidateCertificateInfo.setRequestId(byConventionalCandidateId.getConventionalRequestId());
+                        conventionalCandidateCertificateInfo.setCourseName(candid.getString("Course_Name"));
+                        conventionalCandidateCertificateInfo.setCourseCompletionDate(candid.getString("Course_CompletionDate"));
+                        conventionalCandidateCertificateInfo.setCourseStartDate(candid.getString("Course_StartDate"));
+                        conventionalCandidateCertificateInfo.setCreatedBy(SecurityHelper.getCurrentUser().getUserName());
+                        conventionalCandidateCertificateInfo.setCreatedOn(new Date());
+                        conventionalCandidateCertificateInfo.setInstituteContactNumber(candid.getString("Institute_ContactNumber"));
+                        conventionalCandidateCertificateInfo.setInstituteName(candid.getString("Institute_Name"));
+                        conventionalCandidateCertificateInfo.setInstituteEmailID(candid.getString("Institute_EmailID"));
+                        ConventionalCandidateCertificateInfo savecCandidateCertificateInfo = conventionalCandidateCertificateInfoRepository.save(conventionalCandidateCertificateInfo);
+                        log.debug("added new conventional certificate  for insufficiency");
+                    });
+                }
+                svcSearchResult.setMessage("savedConventionalCandidateCertificateInformation Data");
+                svcSearchResult.setOutcome(true);
+                svcSearchResult.setData(collect);
+                svcSearchResult.setStatus("true");
+            }
+        } catch (Exception e) {
+            log.error("exception occured in savedConventionalCandidateCertificateInformation()" + e.getMessage());
+            svcSearchResult.setMessage(e.getMessage().toString());
+            svcSearchResult.setOutcome(false);
+            svcSearchResult.setStatus("Internal server Error");
+        }
+        log.debug("savedConventionalCandidateCertificateInformation() ends");
+
+        return svcSearchResult;
+    }
+
+    @Transactional
+    public ServiceOutcome<List> saveConventionalCandidateDrugInformation
+            (FetchVendorConventionalCandidateDto fetchVendorConventionalCandidateDto, JSONObject obj1) {
+        ServiceOutcome<List> svcSearchResult = new ServiceOutcome<List>();
+        try {
+            log.debug("saveConventionalCandidateDrugInformation() starts");
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             JSONObject liCandidateInformation = obj1.getJSONObject("liCandidateInformation");
             if (liCandidateInformation.isNull("liCandidateDrugInfo") == false) {
                 JSONArray liCandidateDrugInfo = liCandidateInformation.getJSONArray("liCandidateDrugInfo");
@@ -986,42 +1806,54 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                         ConventionalCandidateDrugInfo candidateDrugInfo = new ConventionalCandidateDrugInfo();
                         candidateDrugInfo.setCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         candidateDrugInfo.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                        candidateDrugInfo.setName("candid.getString('Name')");
-                        candidateDrugInfo.setContactNumber("candid.getString('Name')");
-                        candidateDrugInfo.setSampleCollectionDate(new Date());
-                        candidateDrugInfo.setRemarks("drugs not taken");
-                        candidateDrugInfo.setHouseNumber("54-4,india");
-                        candidateDrugInfo.setStreetAddress("luckknow");
-                        candidateDrugInfo.setCity("Banglore");
-                        candidateDrugInfo.setState("Karnataka");
-                        candidateDrugInfo.setCountry("india");
-                        candidateDrugInfo.setPincode("232333");
+                        candidateDrugInfo.setName(candid.getString("Name"));
+                        candidateDrugInfo.setContactNumber(candid.getString("ContactNumber"));
+                        try {
+                            candidateDrugInfo.setSampleCollectionDate(dateFormater.parse(candid.getString("SampleCollectionDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+                        if (candid.has("Remarks")) {
+                            candidateDrugInfo.setRemarks(candid.getString("Remarks"));
+                        }
+                        candidateDrugInfo.setHouseNumber(candid.getString("HouseNumber"));
+                        candidateDrugInfo.setStreetAddress(candid.getString("StreetAddress"));
+                        candidateDrugInfo.setCity(candid.getString("City"));
+                        candidateDrugInfo.setState(candid.getString("State"));
+                        candidateDrugInfo.setCountry(candid.getString("Country"));
+                        candidateDrugInfo.setPincode(candid.getString("PinCode"));
                         candidateDrugInfo.setCreatedOn(new Date());
-                        candidateDrugInfo.setProminentLandmark("near nearest temple");
+                        candidateDrugInfo.setProminentLandmark(candid.getString("ProminentLandmark"));
                         candidateDrugInfo.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         ConventionalCandidateDrugInfo savedConventionalDrugInfo = conventionalCandidateDrugInfoRepository.save(candidateDrugInfo);
                     });
                 } else {
+                    log.debug("in save conventional drug info() insufficiency starts");
+                    Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
+                    conventionalCandidateDrugInfoRepository.deleteAllByConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
+                    log.debug("deleted the conventional drug info by convetional candidate id");
                     collect.forEach(candid -> {
-                        log.info("in save conventional drug info() insufficiency starts");
-                        Candidate byConventionalCandidateId = candidateRepository.findByConventionalRequestId(obj1.getLong("RequestID"));
-                        conventionalCandidateDrugInfoRepository.deleteAllByConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                        log.warn("deleted the conventional drug info by convetional candidate id");
                         ConventionalCandidateDrugInfo candidateDrugInfo = new ConventionalCandidateDrugInfo();
                         candidateDrugInfo.setCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         candidateDrugInfo.setConventionalRequestId(byConventionalCandidateId.getConventionalRequestId());
-                        candidateDrugInfo.setName("candid.getString('Name')");
-                        candidateDrugInfo.setContactNumber("candid.getString('Name')");
-                        candidateDrugInfo.setSampleCollectionDate(new Date());
-                        candidateDrugInfo.setRemarks("drugs not taken");
-                        candidateDrugInfo.setHouseNumber("54-4,india");
-                        candidateDrugInfo.setStreetAddress("luckknow");
-                        candidateDrugInfo.setCity("Banglore");
-                        candidateDrugInfo.setState("Karnataka");
-                        candidateDrugInfo.setCountry("india");
-                        candidateDrugInfo.setPincode("232333");
+                        candidateDrugInfo.setName(candid.getString("Name"));
+                        candidateDrugInfo.setContactNumber(candid.getString("ContactNumber"));
+                        try {
+                            candidateDrugInfo.setSampleCollectionDate(dateFormater.parse(candid.getString("SampleCollectionDate")));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+                        if (candid.has("Remarks")) {
+                            candidateDrugInfo.setRemarks(candid.getString("Remarks"));
+                        }
+                        candidateDrugInfo.setHouseNumber(candid.getString("HouseNumber"));
+                        candidateDrugInfo.setStreetAddress(candid.getString("StreetAddress"));
+                        candidateDrugInfo.setCity(candid.getString("City"));
+                        candidateDrugInfo.setState(candid.getString("State"));
+                        candidateDrugInfo.setCountry(candid.getString("Country"));
+                        candidateDrugInfo.setPincode(candid.getString("PinCode"));
                         candidateDrugInfo.setCreatedOn(new Date());
-                        candidateDrugInfo.setProminentLandmark("near nearest temple");
+                        candidateDrugInfo.setProminentLandmark(candid.getString("ProminentLandmark"));
                         candidateDrugInfo.setConventionalCandidateId(byConventionalCandidateId.getConventionalCandidateId());
                         ConventionalCandidateDrugInfo savedConventionalDrugInfo = conventionalCandidateDrugInfoRepository.save(candidateDrugInfo);
 
@@ -1040,7 +1872,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             svcSearchResult.setOutcome(false);
             svcSearchResult.setStatus("Internal server Error");
         }
-        log.info("saveConventionalCandidateDrugInformation() ends");
+        log.debug("saveConventionalCandidateDrugInformation() ends");
         return svcSearchResult;
 
     }
@@ -1055,85 +1887,85 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         String strToDate = "";
         String strFromDate = "";
         try {
-            if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l && StringUtils.isNotBlank(dashboardDto.getStatus())) {
-                User user = userRepository.findById(dashboardDto.getUserId()).get();
-                strToDate = dashboardDto.getToDate() != null ? dashboardDto.getToDate() : ApplicationDateUtils.getStringTodayAsDDMMYYYY();
-                strFromDate = dashboardDto.getFromDate() != null ? dashboardDto.getFromDate() : ApplicationDateUtils.subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 7);
-                Date startDate = formatter.parse(strFromDate + " 00:00:00");
-                Date endDate = formatter.parse(strToDate + " 23:59:59");
-                String status = dashboardDto.getStatus();
-                if (status.equals("INTERIMREPORT")) {
-                    status = "PENDINGAPPROVAL";
-                    statusCodes.add(0, status);
-                } else if (status.equals("CAFPENDING")) {
-                    status = "RELATIVEADDRESS";
-                    statusCodes.add(0, status);
-                } else if (status.equals("EPFOSKIPPED")) {
-                    Collections.addAll(statusCodes, "ITR", "DIGILOCKER");
-                } else if (status.equals("NEWUPLOAD")) {
-                    statusCodes.addAll(statusMasterRepository.findAll().parallelStream().map(x -> x.getStatusCode()).collect(Collectors.toList()));
-                } else {
-                    statusCodes.add(0, status);
-                }
-                List<StatusMaster> statusMasterList = statusMasterRepository.findByStatusCodeIn(statusCodes);
-                List<Long> statusIds = statusMasterList.stream().map(x -> x.getStatusMasterId()).collect(Collectors.toList());
-                if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_ADMIN") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_PARTNERADMIN")) {
-                    candidateList = candidateRepository.getCandidateListByOrganizationIdAndStatusAndLastUpdated(user.getOrganization().getOrganizationId(), statusIds, startDate, endDate);
-                }
-                if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTHR")) {
-                    List<User> agentList = userRepository.findAllByAgentSupervisorUserId(user.getUserId());
-                    if (!agentList.isEmpty()) {
-                        agentIds = agentList.stream().map(x -> x.getUserId()).collect(Collectors.toList());
-                    }
-                    agentIds.add(user.getUserId());
-                    candidateList = candidateRepository.getCandidateListByUserIdAndStatusAndLastUpdated(agentIds, statusIds, startDate, endDate);
-                }
-                if (dashboardDto.getStatus().equals("EPFOSKIPPED")) {
-                    candidateList = candidateList.parallelStream().filter(x -> x.getIsUanSkipped()).collect(Collectors.toList());
-                }
-                if (dashboardDto.getStatus().equals("DIGILOCKER") || dashboardDto.getStatus().equals("ITR")) {
-                    candidateList = candidateList.parallelStream().filter(x -> x.getIsUanSkipped() != null ? !x.getIsUanSkipped() : true).collect(Collectors.toList());
-                }
-                for (Candidate candidate : candidateList) {
-                    CandidateDetailsDto candidateDto = this.modelMapper.map(candidate, CandidateDetailsDto.class);
-                    candidateDto.setCreatedOn(formatter.format(candidate.getCreatedOn()));
-                    candidateDto.setSubmittedOn(candidate.getSubmittedOn() != null ? formatter.format(candidate.getSubmittedOn()) : null);
-                    CandidateEmailStatus candidateEmailStatus = candidateEmailStatusRepository.findByCandidateCandidateCode(candidate.getCandidateCode());
-                    if (candidateEmailStatus != null) {
-                        candidateDto.setDateOfEmailInvite(candidateEmailStatus.getDateOfEmailInvite() != null ? formatter.format(candidateEmailStatus.getDateOfEmailInvite()) : null);
-                        candidateDto.setDateOfEmailFailure(candidateEmailStatus.getDateOfEmailFailure() != null ? formatter.format(candidateEmailStatus.getDateOfEmailFailure()) : null);
-                        candidateDto.setDateOfEmailExpire(candidateEmailStatus.getDateOfEmailExpire() != null ? formatter.format(candidateEmailStatus.getDateOfEmailExpire()) : null);
-                        candidateDto.setDateOfEmailReInvite(candidateEmailStatus.getDateOfEmailReInvite() != null ? formatter.format(candidateEmailStatus.getDateOfEmailReInvite()) : null);
-                    }
-                    CandidateStatus candidateStatus = candidateStatusRepository.findByCandidateCandidateCode(candidate.getCandidateCode());
-                    Boolean uan = candidate.getIsUanSkipped() != null ? candidate.getIsUanSkipped() : false;
-                    if (candidateStatus.getStatusMaster().getStatusCode().equals("DIGILOCKER") && uan || candidateStatus.getStatusMaster().getStatusCode().equals("ITR") && uan) {
-                        candidateDto.setCandidateStatusName("EPFO Skipped");
-                    } else {
-                        candidateDto.setCandidateStatusName(candidateStatus.getStatusMaster().getStatusName());
-                    }
-                    List<ContentDTO> contentDTOList = contentService.getContentListByCandidateId(candidate.getCandidateId());
-                    candidateDto.setContentDTOList(contentDTOList);
-
-                    candidateDtoList.add(candidateDto);
-
-                }
-                DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, null, dashboardDto.getUserId(), dashboardDto.getStatus(), candidateDtoList);
-                if (!candidateDtoList.isEmpty()) {
-                    svcSearchResult.setData(dashboardDtoObj);
-                    svcSearchResult.setOutcome(true);
-                    svcSearchResult.setMessage("Candidate list fetched successfully.");
-                    svcSearchResult.setStatus(status);
-                } else {
-                    svcSearchResult.setData(null);
-                    svcSearchResult.setOutcome(false);
-                    svcSearchResult.setMessage("NO Candidate FOUND");
-                }
-            } else {
-                svcSearchResult.setData(null);
-                svcSearchResult.setOutcome(false);
-                svcSearchResult.setMessage("please specify user.");
-            }
+//            if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l && StringUtils.isNotBlank(dashboardDto.getStatus())) {
+//                User user = userRepository.findById(dashboardDto.getUserId()).get();
+//                strToDate = dashboardDto.getToDate() != null ? dashboardDto.getToDate() : ApplicationDateUtils.getStringTodayAsDDMMYYYY();
+//                strFromDate = dashboardDto.getFromDate() != null ? dashboardDto.getFromDate() : ApplicationDateUtils.subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 7);
+//                Date startDate = formatter.parse(strFromDate + " 00:00:00");
+//                Date endDate = formatter.parse(strToDate + " 23:59:59");
+//                String status = dashboardDto.getStatus();
+//                if (status.equals("INTERIMREPORT")) {
+//                    status = "PENDINGAPPROVAL";
+//                    statusCodes.add(0, status);
+//                } else if (status.equals("CAFPENDING")) {
+//                    status = "RELATIVEADDRESS";
+//                    statusCodes.add(0, status);
+//                } else if (status.equals("EPFOSKIPPED")) {
+//                    Collections.addAll(statusCodes, "ITR", "DIGILOCKER");
+//                } else if (status.equals("NEWUPLOAD")) {
+//                    statusCodes.addAll(statusMasterRepository.findAll().parallelStream().map(x -> x.getStatusCode()).collect(Collectors.toList()));
+//                } else {
+//                    statusCodes.add(0, status);
+//                }
+//                List<StatusMaster> statusMasterList = statusMasterRepository.findByStatusCodeIn(statusCodes);
+//                List<Long> statusIds = statusMasterList.stream().map(x -> x.getStatusMasterId()).collect(Collectors.toList());
+//                if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_ADMIN") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_PARTNERADMIN")) {
+//                    candidateList = candidateRepository.getCandidateListByOrganizationIdAndStatusAndLastUpdated(user.getOrganization().getOrganizationId(), statusIds, startDate, endDate);
+//                }
+//                if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTHR")) {
+//                    List<User> agentList = userRepository.findAllByAgentSupervisorUserId(user.getUserId());
+//                    if (!agentList.isEmpty()) {
+//                        agentIds = agentList.stream().map(x -> x.getUserId()).collect(Collectors.toList());
+//                    }
+//                    agentIds.add(user.getUserId());
+//                    candidateList = candidateRepository.getCandidateListByUserIdAndStatusAndLastUpdated(agentIds, statusIds, startDate, endDate);
+//                }
+//                if (dashboardDto.getStatus().equals("EPFOSKIPPED")) {
+//                    candidateList = candidateList.parallelStream().filter(x -> x.getIsUanSkipped()).collect(Collectors.toList());
+//                }
+//                if (dashboardDto.getStatus().equals("DIGILOCKER") || dashboardDto.getStatus().equals("ITR")) {
+//                    candidateList = candidateList.parallelStream().filter(x -> x.getIsUanSkipped() != null ? !x.getIsUanSkipped() : true).collect(Collectors.toList());
+//                }
+//                for (Candidate candidate : candidateList) {
+//                    CandidateDetailsDto candidateDto = this.modelMapper.map(candidate, CandidateDetailsDto.class);
+//                    candidateDto.setCreatedOn(formatter.format(candidate.getCreatedOn()));
+//                    candidateDto.setSubmittedOn(candidate.getSubmittedOn() != null ? formatter.format(candidate.getSubmittedOn()) : null);
+//                    CandidateEmailStatus candidateEmailStatus = candidateEmailStatusRepository.findByCandidateCandidateCode(candidate.getCandidateCode());
+//                    if (candidateEmailStatus != null) {
+//                        candidateDto.setDateOfEmailInvite(candidateEmailStatus.getDateOfEmailInvite() != null ? formatter.format(candidateEmailStatus.getDateOfEmailInvite()) : null);
+//                        candidateDto.setDateOfEmailFailure(candidateEmailStatus.getDateOfEmailFailure() != null ? formatter.format(candidateEmailStatus.getDateOfEmailFailure()) : null);
+//                        candidateDto.setDateOfEmailExpire(candidateEmailStatus.getDateOfEmailExpire() != null ? formatter.format(candidateEmailStatus.getDateOfEmailExpire()) : null);
+//                        candidateDto.setDateOfEmailReInvite(candidateEmailStatus.getDateOfEmailReInvite() != null ? formatter.format(candidateEmailStatus.getDateOfEmailReInvite()) : null);
+//                    }
+//                    CandidateStatus candidateStatus = candidateStatusRepository.findByCandidateCandidateCode(candidate.getCandidateCode());
+//                    Boolean uan = candidate.getIsUanSkipped() != null ? candidate.getIsUanSkipped() : false;
+//                    if (candidateStatus.getStatusMaster().getStatusCode().equals("DIGILOCKER") && uan || candidateStatus.getStatusMaster().getStatusCode().equals("ITR") && uan) {
+//                        candidateDto.setCandidateStatusName("EPFO Skipped");
+//                    } else {
+//                        candidateDto.setCandidateStatusName(candidateStatus.getStatusMaster().getStatusName());
+//                    }
+//                    List<ContentDTO> contentDTOList = contentService.getContentListByCandidateId(candidate.getCandidateId());
+//                    candidateDto.setContentDTOList(contentDTOList);
+//
+//                    candidateDtoList.add(candidateDto);
+//
+//                }
+//                DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, null, dashboardDto.getUserId(), dashboardDto.getStatus(), candidateDtoList);
+//                if (!candidateDtoList.isEmpty()) {
+//                    svcSearchResult.setData(dashboardDtoObj);
+//                    svcSearchResult.setOutcome(true);
+//                    svcSearchResult.setMessage("Candidate list fetched successfully.");
+//                    svcSearchResult.setStatus(status);
+//                } else {
+//                    svcSearchResult.setData(null);
+//                    svcSearchResult.setOutcome(false);
+//                    svcSearchResult.setMessage("NO Candidate FOUND");
+//                }
+//            } else {
+//                svcSearchResult.setData(null);
+//                svcSearchResult.setOutcome(false);
+//                svcSearchResult.setMessage("please specify user.");
+//            }
         } catch (Exception ex) {
             log.error("Exception occured in getAllCandidateList method in CandidateServiceImpl-->", ex);
             svcSearchResult.setData(null);
@@ -1148,7 +1980,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     public ServiceOutcome<Boolean> invitationSent(CandidateInvitationSentDto candidateInvitationSentDto) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             CandidateStatus candidateStatus = null;
             CandidateEmailStatus candidateEmailStatus = null;
             CandidateStatus candidateStatusresult = null;
@@ -1208,7 +2040,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         ServiceOutcome<CandidateDetailsDto> svcSearchResult = new ServiceOutcome<CandidateDetailsDto>();
         CandidateDetailsDto candidateDetailsDto = new CandidateDetailsDto();
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             Candidate result = null;
             if (StringUtils.isNotBlank(candidateDetails.getCandidateCode())) {
                 Candidate candidate = candidateRepository.findByCandidateCode(candidateDetails.getCandidateCode().trim());
@@ -1245,7 +2077,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
 
-    public ServiceOutcome<List<CandidateStatus>> getCandidateStatusList(String strToDate, String strFromDate, Long userId) {
+    public ServiceOutcome<List<CandidateStatus>> getCandidateStatusList(String strToDate, String
+            strFromDate, Long userId) {
         ServiceOutcome<List<CandidateStatus>> svcSearchResult = new ServiceOutcome<List<CandidateStatus>>();
         List<CandidateStatus> candidateStatusList = new ArrayList<CandidateStatus>();
         List<Long> agentIds = new ArrayList<Long>();
@@ -1626,7 +2459,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 //			}
 //			else {
             candidateCafEducation.setBoardOrUniversityName(candidateCafEducationDto.getBoardOrUniversityName());
-            candidateCafEducation.setCourseName(candidateCafEducationDto.getCourseName());
+//            candidateCafEducation.setCourseName(candidateCafEducationDto.getCourseName());
             candidateCafEducation.setColor(colorRepository.findByColorCode("AMBER"));
             candidateCafEducation.setRemarkMaster(remarkMasterRepository.findByRemarkCode("ALL"));
 //			}
@@ -1675,7 +2508,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
 
     @Override
-    public ServiceOutcome<Boolean> saveNUpdateCandidateExperience(String candidateCafExperienceDtoObj, MultipartFile certificate) {
+    public ServiceOutcome<Boolean> saveNUpdateCandidateExperience(String
+                                                                          candidateCafExperienceDtoObj, MultipartFile certificate) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         CandidateCafExperience candidateCafExperience = null;
         CandidateCafExperience candidateCafExperienceObj = null;
@@ -1758,7 +2592,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
 
     @Override
-    public ServiceOutcome<CandidateCafExperienceDto> getCandidateExperienceById(Long candidateCafExperienceId) {
+    public ServiceOutcome<CandidateCafExperienceDto> getCandidateExperienceById(Long
+                                                                                        candidateCafExperienceId) {
         ServiceOutcome<CandidateCafExperienceDto> svcSearchResult = new ServiceOutcome<CandidateCafExperienceDto>();
         try {
             Optional<CandidateCafExperience> candidateCafExperienceObj = candidateCafExperienceRepository.findById(candidateCafExperienceId);
@@ -1788,7 +2623,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     //Candidate details
     @Override
-    public ServiceOutcome<CandidationApplicationFormDto> candidateApplicationFormDetails(String candidateCode) {
+    public ServiceOutcome<CandidationApplicationFormDto> candidateApplicationFormDetails(String
+                                                                                                 candidateCode) {
         ServiceOutcome<CandidationApplicationFormDto> svcSearchResult = new ServiceOutcome<CandidationApplicationFormDto>();
         CandidationApplicationFormDto candidationApplicationFormDto = new CandidationApplicationFormDto();
         List<CandidateCafEducationDto> candidateCafEducationDtoList = new ArrayList<CandidateCafEducationDto>();
@@ -1799,15 +2635,15 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         try {
             if (StringUtils.isNotEmpty(candidateCode)) {
                 Candidate candidate = candidateRepository.findByCandidateCode(candidateCode);
-                CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "PAN");
-                if (candidateIdItemPan != null && candidateIdItemPan.getIdHolder() != null) {
-                    candidate.setCandidateName(candidateIdItemPan.getIdHolder());
-                } else {
-                    CandidateIdItems candidateIdItemAadhar = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "AADHARID");
-                    if (Objects.nonNull(candidateIdItemAadhar)) {
-                        candidate.setCandidateName(candidateIdItemAadhar.getIdHolder());
-                    }
-                }
+//                CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "PAN");
+//                if (candidateIdItemPan != null && candidateIdItemPan.getIdHolder() != null) {
+//                    candidate.setCandidateName(candidateIdItemPan.getIdHolder());
+//                } else {
+//                    CandidateIdItems candidateIdItemAadhar = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "AADHARID");
+//                    if (Objects.nonNull(candidateIdItemAadhar)) {
+//                        candidate.setCandidateName(candidateIdItemAadhar.getIdHolder());
+//                    }
+//                }
                 candidationApplicationFormDto.setCandidate(candidate);
                 List<CandidateCafEducation> candidateCafEducationList = candidateCafEducationRepository.findAllByCandidateCandidateCode(candidateCode);
                 if (!candidateCafEducationList.isEmpty()) {
@@ -1908,7 +2744,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     @Transactional
     @Override
-    public ServiceOutcome<Boolean> saveCandidateApplicationForm(String candidateCafEducationId, JSONArray candidateCafAddressDto, MultipartFile resume, String candidateCode) {
+    public ServiceOutcome<Boolean> saveCandidateApplicationForm(String candidateCafEducationId, JSONArray
+            candidateCafAddressDto, MultipartFile resume, String candidateCode) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         try {
             Candidate candidate = candidateRepository.findByCandidateCode(candidateCode);
@@ -1990,12 +2827,13 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<Boolean> updateCandidateEducationStatusAndRemark(ApprovalStatusRemarkDto approvalStatusRemarkDto) {
+    public ServiceOutcome<Boolean> updateCandidateEducationStatusAndRemark(ApprovalStatusRemarkDto
+                                                                                   approvalStatusRemarkDto) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         CandidateCafEducation candidateCafEducation = null;
         // System.out.println("\n__________approvalStatusRemarkDto________"+approvalStatusRemarkDto);
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             if (approvalStatusRemarkDto.getId() != null) {
                 Optional<CandidateCafEducation> candidateCafEducationObj1 = candidateCafEducationRepository.findById(approvalStatusRemarkDto.getId());
                 if (candidateCafEducationObj1.isPresent()) {
@@ -2005,7 +2843,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                     if (qualificationMasterobj.isPresent()) {
                         QualificationMaster qualificationMasterobj1 = qualificationMasterobj.get();
                         String qualificationName = qualificationMasterobj1.getQualificationName();
-                        candidateCafEducationobj.setCourseName(qualificationName);
+//                        candidateCafEducationobj.setCourseName(qualificationName);
                     }
                     candidateCafEducationobj.setSchoolOrCollegeName(approvalStatusRemarkDto.getSchoolOrCollegeName());
                     candidateCafEducationobj.setBoardOrUniversityName(approvalStatusRemarkDto.getBoardOrUniversityName());
@@ -2038,7 +2876,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                 if (qualificationMasterobj.isPresent()) {
                     QualificationMaster qualificationMasterobj1 = qualificationMasterobj.get();
                     String qualificationName = qualificationMasterobj1.getQualificationName();
-                    candidateCafEducation.setCourseName(qualificationName);
+//                    candidateCafEducation.setCourseName(qualificationName);
                 }
 
                 BeanUtils.copyProperties(approvalStatusRemarkDto, candidateCafEducation);
@@ -2065,11 +2903,12 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<Boolean> updateCandidateExperienceStatusAndRemark(ApprovalStatusRemarkDto approvalStatusRemarkDto) {
+    public ServiceOutcome<Boolean> updateCandidateExperienceStatusAndRemark(ApprovalStatusRemarkDto
+                                                                                    approvalStatusRemarkDto) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         CandidateCafExperience candidateCafExperience = null;
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             if (approvalStatusRemarkDto.getId() != null) {
                 Optional<CandidateCafExperience> candidateCafExperienceObj1 = candidateCafExperienceRepository.findById(approvalStatusRemarkDto.getId());
                 if (candidateCafExperienceObj1.isPresent()) {
@@ -2120,11 +2959,12 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<Boolean> updateCandidateAddressStatusAndRemark(ApprovalStatusRemarkDto approvalStatusRemarkDto) {
+    public ServiceOutcome<Boolean> updateCandidateAddressStatusAndRemark(ApprovalStatusRemarkDto
+                                                                                 approvalStatusRemarkDto) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         CandidateCafAddress candidateCafAddress = null;
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             if (approvalStatusRemarkDto.getId() != null) {
                 Optional<CandidateCafAddress> candidateCafAddressObj1 = candidateCafAddressRepository.findById(approvalStatusRemarkDto.getId());
                 if (candidateCafAddressObj1.isPresent()) {
@@ -2163,11 +3003,13 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     @Transactional
     @Override
-    public ServiceOutcome<Boolean> candidateApplicationFormApproved(String candidateCode, MultipartFile criminalVerificationDocument, Long criminalVerificationColorId, MultipartFile globalDatabseCaseDetailsDocument, Long globalDatabseCaseDetailsColorId) {
+    public ServiceOutcome<Boolean> candidateApplicationFormApproved(String candidateCode, MultipartFile
+            criminalVerificationDocument, Long criminalVerificationColorId, MultipartFile
+                                                                            globalDatabseCaseDetailsDocument, Long globalDatabseCaseDetailsColorId) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         try {
             Candidate candidate = candidateRepository.findByCandidateCode(candidateCode);
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             if (criminalVerificationDocument != null && globalDatabseCaseDetailsDocument != null) {
                 CandidateCaseDetails candidateCaseDetails = new CandidateCaseDetails();
 
@@ -2310,7 +3152,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     @Transactional
     @Override
-    public ServiceOutcome<Boolean> relationshipAddressVerification(String candidateCafRelation, MultipartFile document) {
+    public ServiceOutcome<Boolean> relationshipAddressVerification(String
+                                                                           candidateCafRelation, MultipartFile document) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         CandidateCafRelationship candidateCafRelationshipObj = null;
 
@@ -2492,7 +3335,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<CandidationApplicationFormDto> candidateApplicationFormDetailsExceptCandidate(String candidateCode) {
+    public ServiceOutcome<CandidationApplicationFormDto> candidateApplicationFormDetailsExceptCandidate
+            (String candidateCode) {
         ServiceOutcome<CandidationApplicationFormDto> svcSearchResult = new ServiceOutcome<CandidationApplicationFormDto>();
         CandidationApplicationFormDto candidationApplicationFormDto = new CandidationApplicationFormDto();
         List<CandidateCafEducationDto> candidateCafEducationDtoList = new ArrayList<CandidateCafEducationDto>();
@@ -2509,13 +3353,13 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             if (StringUtils.isNotEmpty(candidateCode)) {
                 Candidate candidate = candidateRepository.findByCandidateCode(candidateCode);
                 Long candidateId = candidate.getCandidateId();
-                CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "PAN");
-                if (candidateIdItemPan != null) {
-                    candidate.setCandidateName(candidateIdItemPan.getIdHolder());
-                } else {
-                    CandidateIdItems candidateIdItemAadhar = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "AADHARID");
-                    candidate.setCandidateName(candidateIdItemAadhar.getIdHolder());
-                }
+//                CandidateIdItems candidateIdItemPan = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "PAN");
+//                if (candidateIdItemPan != null) {
+//                    candidate.setCandidateName(candidateIdItemPan.getIdHolder());
+//                } else {
+//                    CandidateIdItems candidateIdItemAadhar = candidateIdItemsRepository.findByCandidateCandidateCodeAndServiceSourceMasterServiceCode(candidateCode, "AADHARID");
+//                    candidate.setCandidateName(candidateIdItemAadhar.getIdHolder());
+//                }
                 candidationApplicationFormDto.setCandidate(candidate);
                 List<CandidateCafEducation> candidateCafEducationList = candidateCafEducationRepository.findAllByCandidateCandidateCode(candidateCode);
                 if (!candidateCafEducationList.isEmpty()) {
@@ -2618,8 +3462,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                 CandidateStatus candidateStatus = candidateStatusRepository.findByCandidateCandidateCode(candidateCode);
                 candidationApplicationFormDto.setCandidateStatus(candidateStatus);
 
-                List<CandidateIdItems> candidateIdItems = candidateIdItemsRepository.findByCandidateCandidateCode(candidateCode);
-                candidationApplicationFormDto.setCandidateIdItems(candidateIdItems);
+//                List<CandidateIdItems> candidateIdItems = candidateIdItemsRepository.findByCandidateCandidateCode(candidateCode);
+//                candidationApplicationFormDto.setCandidateIdItems(candidateIdItems);
 
                 CandidateEmailStatus candidateEmailStatus = candidateEmailStatusRepository.findByCandidateCandidateCode(candidate.getCandidateCode());
                 candidationApplicationFormDto.setEmailStatus(candidateEmailStatus);
@@ -2982,7 +3826,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<CandidateCafExperience> updateCandidateExperience(CandidateCafExperienceDto candidateCafExperienceDto) {
+    public ServiceOutcome<CandidateCafExperience> updateCandidateExperience(CandidateCafExperienceDto
+                                                                                    candidateCafExperienceDto) {
         ServiceOutcome<CandidateCafExperience> outcome = new ServiceOutcome<CandidateCafExperience>();
         try {
             Candidate candidate = candidateRepository.findByCandidateCode(candidateCafExperienceDto.getCandidateCode());
@@ -3012,7 +3857,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<CandidateCafAddress> saveCandidateAddress(CandidateCafAddressDto candidateCafAddressDto) {
+    public ServiceOutcome<CandidateCafAddress> saveCandidateAddress(CandidateCafAddressDto
+                                                                            candidateCafAddressDto) {
         ServiceOutcome<CandidateCafAddress> outcome = new ServiceOutcome<CandidateCafAddress>();
         try {
             Candidate candidate = candidateRepository.findByCandidateCode(candidateCafAddressDto.getCandidateCode());
@@ -3033,7 +3879,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                     CandidateCafAddress candidateCafAddress = candidateCafAddressRepository.findById(candidateCafAddressDto.getCandidateCafAddressId()).get();
                     candidateCafAddress.setCandidate(candidate);
                     candidateCafAddress.setCandidateAddress(candidateCafAddressDto.getCandidateAddress());
-                    candidateCafAddress.setPinCode(candidateCafAddressDto.getPinCode());
+                    candidateCafAddress.setPinCode(String.valueOf(candidateCafAddressDto.getPinCode()));
                     candidateCafAddress.setCity(candidateCafAddressDto.getCity());
                     candidateCafAddress.setName(candidate.getCandidateName());
                     candidateCafAddress.setLastUpdatedOn(new Date());
@@ -3130,7 +3976,9 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         return svcSearchResult;
     }
 
-    public CandidationApplicationFormDto tenureSum(List<EmploymentDetailsDto> employmentDetailsDto, CandidationApplicationFormDto candidationApplicationFormDto) {
+    public CandidationApplicationFormDto tenureSum
+            (List<EmploymentDetailsDto> employmentDetailsDto, CandidationApplicationFormDto
+                    candidationApplicationFormDto) {
         Integer opTenureYears = 0;
         Integer opTenureMonths = 0;
         Integer ipTenureYears = 0;
@@ -3184,7 +4032,9 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         return candidationApplicationFormDto;
     }
 
-    public CandidationApplicationFormDto gapSum(List<EmploymentDetailsDto> employmentDetailsDto, CandidationApplicationFormDto candidationApplicationFormDto) {
+    public CandidationApplicationFormDto gapSum
+            (List<EmploymentDetailsDto> employmentDetailsDto, CandidationApplicationFormDto
+                    candidationApplicationFormDto) {
         Integer gapYears = 0;
         Integer gapMonths = 0;
 
@@ -3238,7 +4088,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public ServiceOutcome<String> generateInterimReport(String candidateCode) throws FileNotFoundException, IOException {
+    public ServiceOutcome<String> generateInterimReport(String candidateCode) throws
+            Exception {
         ServiceOutcome<String> svcSearchResult = new ServiceOutcome<String>();
         ServiceOutcome<CandidationApplicationFormDto> applicationForm = candidateApplicationFormDetailsExceptCandidate(candidateCode);
 
@@ -3275,7 +4126,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         if (!idItems.isEmpty()) {
             List<String> colorArray = new ArrayList<>();
             for (int index = 0; index < idItems.size(); index++) {
-                colorArray.add(idItems.get(index).getColor().getColorCode());
+//                colorArray.add(idItems.get(index).getColor().getColorCode());
             }
             if (colorArray.contains("RED")) {
                 candidateIdItems_stat = "Red";
@@ -3384,7 +4235,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             // do something.
         }
 
-        MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
+//        MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
 
 //		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 //
@@ -3471,7 +4322,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public List<CandidateCafExperience> getCandidateExperienceFromItrAndEpfoByCandidateId(Long candidateId, Boolean formatEpfoDate) {
+    public List<CandidateCafExperience> getCandidateExperienceFromItrAndEpfoByCandidateId(Long
+                                                                                                  candidateId, Boolean formatEpfoDate) {
 
         Candidate candidate = candidateRepository.findById(candidateId).orElseThrow(() -> new RuntimeException("invalid candidate id"));
         String nodeServerUrl = "http://ec2-35-154-251-102.ap-south-1.compute.amazonaws.com:9090/v1.0/candidate/get-itr-epfo/" + candidateId + "?formatEpfoDate=" + (formatEpfoDate ? "1" : "0");
@@ -3510,7 +4362,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
     @Override
-    public CandidateVerificationState addOrUpdateCandidateVerificationStateByCandidateId(Long candidateId, CandidateVerificationState candidateVerificationState) {
+    public CandidateVerificationState addOrUpdateCandidateVerificationStateByCandidateId(Long
+                                                                                                 candidateId, CandidateVerificationState candidateVerificationState) {
         CandidateVerificationState candidateVerificationState1 = candidateVerificationStateRepository.findByCandidateCandidateId(candidateId);
         if (Objects.nonNull(candidateVerificationState1)) {
             candidateVerificationState.setCandidateVerificationStateId(candidateVerificationState1.getCandidateVerificationStateId());
@@ -3660,11 +4513,12 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
 
     // update the vendor proof color by agent ///
     @Override
-    public ServiceOutcome<Boolean> updateCandidateVendorProofColor(VendorUploadChecksDto vendorUploadChecksDto) {
+    public ServiceOutcome<Boolean> updateCandidateVendorProofColor(VendorUploadChecksDto
+                                                                           vendorUploadChecksDto) {
         ServiceOutcome<Boolean> svcSearchResult = new ServiceOutcome<Boolean>();
         VendorUploadChecks result = null;
         // CandidateCafExperience candidateCafExperience=null;
-        User user = SecurityHelper.getCurrentUser();
+        User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
         try {
             VendorUploadChecks vendorChecks = vendorUploadChecksRepository.findByVendorChecksVendorcheckId(vendorUploadChecksDto.getVendorChecks());
             if (vendorChecks != null) {
@@ -3728,7 +4582,7 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         CandidateAddComments result = null;
 
         try {
-            User user = SecurityHelper.getCurrentUser();
+            User user = (SecurityHelper.getCurrentUser() != null) ? SecurityHelper.getCurrentUser() : userRepository.findByUserId(53l);
             Candidate candidate = candidateRepository.findByCandidateCode(candidateCaseDetailsDTO.getCandidateCode());
             Long candidateId = candidate.getCandidateId();
             CandidateAddComments candidateAddComments = candidateAddCommentRepository.findByCandidateCandidateId(candidateId);
@@ -3788,7 +4642,8 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
         return longServiceOutcome;
     }
 
-    public ServiceOutcome<DashboardDto> getUploadDetailsStatusAndCountConventional(DashboardDto dashboardDto) {
+    public ServiceOutcome<DashboardDto> getUploadDetailsStatusAndCountConventional(DashboardDto
+                                                                                           dashboardDto) {
 
         ServiceOutcome<DashboardDto> svcSearchResult = new ServiceOutcome<DashboardDto>();
         List<CandidateStatusCountDto> candidateStatusCountDtoList = new ArrayList<CandidateStatusCountDto>();
@@ -3799,16 +4654,24 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l) {
                 strToDate = dashboardDto.getToDate() != null ? dashboardDto.getToDate() : ApplicationDateUtils.getStringTodayAsDDMMYYYY();
                 strFromDate = dashboardDto.getFromDate() != null ? dashboardDto.getFromDate() : ApplicationDateUtils.subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 7);
-                ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> svcOutCome = getCandidateRequestList(strToDate, strFromDate, dashboardDto.getUserId());
-                candidatesSubmittedList = svcOutCome.getData();
-                List<ConventionalVendorCandidatesSubmitted> inProgressList = candidatesSubmittedList != null ? candidatesSubmittedList.stream().filter(c -> c.getStatus().getStatusCode().equalsIgnoreCase("INPROGRESS")).collect(Collectors.toList()) : null;
-                List<ConventionalVendorCandidatesSubmitted> newUpload = candidatesSubmittedList != null ? candidatesSubmittedList.stream().filter(c -> c.getStatus().getStatusCode().equalsIgnoreCase("NEWUPLOAD")).collect(Collectors.toList()) : null;
-                List<ConventionalVendorCandidatesSubmitted> qcPending = candidatesSubmittedList != null ? candidatesSubmittedList.stream().filter(c -> c.getStatus().getStatusMasterId() != 1l && c.getStatus().getStatusMasterId() != 15l && c.getStatus().getStatusMasterId() != 13l && c.getStatus().getStatusMasterId() != 8l).collect(Collectors.toList()) : null;
-                candidateStatusCountDtoList.add(0, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("NEWUPLOAD").getStatusName(), statusMasterRepository.findByStatusCode("NEWUPLOAD").getStatusCode(), newUpload != null ? candidatesSubmittedList.size() : 0));
-                candidateStatusCountDtoList.add(1, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("INPROGRESS").getStatusName(), statusMasterRepository.findByStatusCode("INPROGRESS").getStatusCode(), inProgressList != null ? inProgressList.size() : 0));
-                candidateStatusCountDtoList.add(2, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("PENDINGAPPROVAL").getStatusName(), statusMasterRepository.findByStatusCode("PENDINGAPPROVAL").getStatusCode(), qcPending != null ? qcPending.size() : 0));
+                Date startDate = formatter.parse(strFromDate + " 00:00:00");
+                Date endDate = formatter.parse(strToDate + " 23:59:59");
+                candidateStatusCountDtoList.add(0, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("NEWUPLOAD").getStatusName(),
+                        statusMasterRepository.findByStatusCode("NEWUPLOAD").getStatusCode(),
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRange(startDate, endDate)));
 
-
+                candidateStatusCountDtoList.add(1, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("INPROGRESS").getStatusName(),
+                        statusMasterRepository.findByStatusCode("INPROGRESS").getStatusCode(),
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeCount(statusMasterRepository.findByStatusCode("INPROGRESS").getStatusCode(), startDate, endDate)));
+                candidateStatusCountDtoList.add(2, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("PENDINGAPPROVAL").getStatusName(),
+                        statusMasterRepository.findByStatusCode("PENDINGAPPROVAL").getStatusCode(),
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeCount(statusMasterRepository.findByStatusCode("PENDINGAPPROVAL").getStatusCode(), startDate, endDate)));
+                candidateStatusCountDtoList.add(3, new CandidateStatusCountDto("STOPBGV",
+                        "STOPBGV",
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeForStopBgv(startDate, endDate)));
+                candidateStatusCountDtoList.add(4, new CandidateStatusCountDto("FASTTRACK",
+                        "FASTTRACK",
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeForFastTrack(startDate, endDate)));
                 DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, candidateStatusCountDtoList, dashboardDto.getUserId(), null, null);
                 svcSearchResult.setData(dashboardDtoObj);
                 svcSearchResult.setOutcome(true);
@@ -3838,12 +4701,15 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l) {
                 strToDate = dashboardDto.getToDate() != null ? dashboardDto.getToDate() : ApplicationDateUtils.getStringTodayAsDDMMYYYY();
                 strFromDate = dashboardDto.getFromDate() != null ? dashboardDto.getFromDate() : ApplicationDateUtils.subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 7);
-                ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> svcOutCome = getCandidateRequestList(strToDate, strFromDate, dashboardDto.getUserId());
-                candidatesSubmittedList = svcOutCome.getData();
-                List<ConventionalVendorCandidatesSubmitted> interimList = candidatesSubmittedList != null ? candidatesSubmittedList.stream().filter(c -> c.getStatus().getStatusCode().equalsIgnoreCase("INTERIMREPORT")).collect(Collectors.toList()) : null;
-                List<ConventionalVendorCandidatesSubmitted> finalList = candidatesSubmittedList != null ? candidatesSubmittedList.stream().filter(c -> c.getStatus().getStatusCode().equalsIgnoreCase("FINALREPORT")).collect(Collectors.toList()) : null;
-                candidateStatusCountDtoList.add(0, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("INTERIMREPORT").getStatusName(), statusMasterRepository.findByStatusCode("INTERIMREPORT").getStatusCode(), interimList != null ? interimList.size() : 0));
-                candidateStatusCountDtoList.add(1, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("FINALREPORT").getStatusName(), statusMasterRepository.findByStatusCode("FINALREPORT").getStatusCode(), finalList != null ? finalList.size() : 0));
+                Date startDate = formatter.parse(strFromDate + " 00:00:00");
+                Date endDate = formatter.parse(strToDate + " 23:59:59");
+                candidateStatusCountDtoList.add(0, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("INTERIMREPORT").getStatusName(),
+                        statusMasterRepository.findByStatusCode("INTERIMREPORT").getStatusCode(),
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeCount(statusMasterRepository.findByStatusCode("INTERIMREPORT").getStatusCode(), startDate, endDate)));
+                candidateStatusCountDtoList.add(1, new CandidateStatusCountDto(statusMasterRepository.findByStatusCode("FINALREPORT").getStatusName(), statusMasterRepository.findByStatusCode("FINALREPORT").getStatusCode(),
+                        conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRangeCount(statusMasterRepository.findByStatusCode("FINALREPORT").getStatusCode(), startDate, endDate)));
+                candidateStatusCountDtoList.add(2, new CandidateStatusCountDto("PENDING INTERIM REPORT ON BASIC CHECKS", "PENDINGINTERIMREPORTONBASICCHECKS",
+                        conventionalVendorCandidatesSubmittedRepository.findPendingInterimReportOnBasicChecksCount(startDate, endDate)));
                 DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, candidateStatusCountDtoList, dashboardDto.getUserId(), null, null);
                 svcSearchResult.setData(dashboardDtoObj);
                 svcSearchResult.setOutcome(true);
@@ -3863,51 +4729,54 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
     }
 
 
-    public ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> getCandidateRequestList(String strToDate, String strFromDate, Long userId) {
-        ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> svcSearchResult = new ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>>();
-//        List<CandidateStatus> candidateStatusList = new ArrayList<CandidateStatus>();
-        List<ConventionalVendorCandidatesSubmitted> candidatesSubmittedList = new ArrayList<ConventionalVendorCandidatesSubmitted>();
-
-        List<Long> agentIds = new ArrayList<Long>();
-        try {
-            Date startDate = formatter.parse(strFromDate + " 00:00:00");
-            Date endDate = formatter.parse(strToDate + " 23:59:59");
-            User user = userRepository.findById(userId).get();
-            if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_ADMIN") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_PARTNERADMIN")) {
-//                candidateStatusList = candidateStatusRepository.findAllByCandidateOrganizationOrganizationIdAndLastUpdatedOnBetween(user.getOrganization().getOrganizationId(), startDate, endDate);
-                candidatesSubmittedList = conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRange(userId, startDate, endDate);
-            }
-            if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTHR")) {
-                List<User> agentList = userRepository.findAllByAgentSupervisorUserId(user.getUserId());
-                if (!agentList.isEmpty()) {
-                    agentIds = agentList.stream().map(x -> x.getUserId()).collect(Collectors.toList());
-                }
-                agentIds.add(user.getUserId());
-//                candidateStatusList = candidateStatusRepository.findAllByCandidateCreatedByUserIdInAndLastUpdatedOnBetween(agentIds, startDate, endDate);
-                candidatesSubmittedList = conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRange(userId, startDate, endDate);
-            }
-            if (candidatesSubmittedList.isEmpty() == true) {
-                svcSearchResult.setData(new ArrayList<ConventionalVendorCandidatesSubmitted>());
-            } else {
-                svcSearchResult.setData(candidatesSubmittedList);
-            }
-            svcSearchResult.setOutcome(true);
-            svcSearchResult.setMessage(messageSource.getMessage("msg.success", null, LocaleContextHolder.getLocale()));
-        } catch (Exception ex) {
-            log.error("Exception occured in getCandidateStatusList method in CandidateServiceImpl-->", ex);
-            svcSearchResult.setData(null);
-            svcSearchResult.setOutcome(false);
-            svcSearchResult.setMessage(messageSource.getMessage("ERROR.MESSAGE", null, LocaleContextHolder.getLocale()));
-        }
-        return svcSearchResult;
-    }
+//    public ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> getCandidateRequestList(String
+//                                                                                                       strToDate, String strFromDate, Long userId) {
+//        ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>> svcSearchResult = new ServiceOutcome<List<ConventionalVendorCandidatesSubmitted>>();
+////        List<CandidateStatus> candidateStatusList = new ArrayList<CandidateStatus>();
+//        List<ConventionalVendorCandidatesSubmitted> candidatesSubmittedList = new ArrayList<ConventionalVendorCandidatesSubmitted>();
+//
+//        List<Long> agentIds = new ArrayList<Long>();
+//        try {
+//            Date startDate = formatter.parse(strFromDate + " 00:00:00");
+//            Date endDate = formatter.parse(strToDate + " 23:59:59");
+//            User user = userRepository.findById(userId).get();
+//            if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_ADMIN") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_PARTNERADMIN")) {
+    /// /                candidateStatusList = candidateStatusRepository.findAllByCandidateOrganizationOrganizationIdAndLastUpdatedOnBetween(user.getOrganization().getOrganizationId(), startDate, endDate);
+//                candidatesSubmittedList = conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRange(startDate, endDate);
+//            }
+//            if (user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTSUPERVISOR") || user.getRole().getRoleCode().equalsIgnoreCase("ROLE_AGENTHR")) {
+//                List<User> agentList = userRepository.findAllByAgentSupervisorUserId(user.getUserId());
+//                if (!agentList.isEmpty()) {
+//                    agentIds = agentList.stream().map(x -> x.getUserId()).collect(Collectors.toList());
+//                }
+//                agentIds.add(user.getUserId());
+//                candidatesSubmittedList = conventionalVendorCandidatesSubmittedRepository.findAllByUserIdAndDateRange(startDate, endDate);
+//            }
+//            if (candidatesSubmittedList.isEmpty() == true) {
+//                svcSearchResult.setData(new ArrayList<ConventionalVendorCandidatesSubmitted>());
+//            } else {
+//                svcSearchResult.setData(candidatesSubmittedList);
+//            }
+//            svcSearchResult.setOutcome(true);
+//            svcSearchResult.setMessage(messageSource.getMessage("msg.success", null, LocaleContextHolder.getLocale()));
+//        } catch (Exception ex) {
+//            log.error("Exception occured in getCandidateStatusList method in CandidateServiceImpl-->", ex);
+//            svcSearchResult.setData(null);
+//            svcSearchResult.setOutcome(false);
+//            svcSearchResult.setMessage(messageSource.getMessage("ERROR.MESSAGE", null, LocaleContextHolder.getLocale()));
+//        }
+//        return svcSearchResult;
+//    }
 
     @Autowired
     ConventionalCandidatesSubmittedRepository conventionalCandidatesSubmittedRepository;
     @Autowired
     LiCheckToPerformRepository liCheckToPerformRepository;
+    @Autowired
+    LicheckHistoryRepository licheckHistoryRepository;
 
-    public ServiceOutcome<ConventionalCReportApprovalDto> getVendorUploadChecksByCandidateId(String requestID) {
+    public ServiceOutcome<ConventionalCReportApprovalDto> getVendorUploadChecksByCandidateId(String
+                                                                                                     requestID) {
         ServiceOutcome<ConventionalCReportApprovalDto> conventionalCandidateOutcome = new ServiceOutcome<>();
         List<VendorUploadChecksDto> vendordocDtoList = new ArrayList<VendorUploadChecksDto>();
         ConventionalCReportApprovalDto conventionalCReportApprovalDto = new ConventionalCReportApprovalDto();
@@ -3920,19 +4789,32 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
                 Long statusMasterId = byRequestId.getStatus().getStatusMasterId();
                 conventionalCReportApprovalDto.setFinalReportStatus(statusMasterId);
             }
-
             conventionalCReportApprovalDto.setCandidateName(candidate.getCandidateName());
             List<VendorChecks> vendorList = vendorChecksRepository.findAllByCandidateCandidateId(candidateId);
             for (VendorChecks vendorChecks : vendorList) {
                 User user = userRepository.findByUserId(vendorChecks.getVendorId());
                 VendorUploadChecks vendorChecksss = vendorUploadChecksRepository.findByVendorChecksVendorcheckId(vendorChecks.getVendorcheckId());
                 if (vendorChecksss != null) {
-
                     ConventionalVendorliChecksToPerform byVendorChecksVendorcheckId = liCheckToPerformRepository.findByVendorChecksVendorcheckId(vendorChecks.getVendorcheckId());
-                    if (byVendorChecksVendorcheckId != null) {
-                        if (byVendorChecksVendorcheckId.getCheckStatus().getVendorCheckStatusMasterId() != 7l && byVendorChecksVendorcheckId.getCheckStatus().getVendorCheckStatusMasterId() != 2l) {
-                            VendorUploadChecksDto vendorUploadChecksDto = new VendorUploadChecksDto(user.getUserFirstName(), vendorChecksss.getVendorChecks().getVendorcheckId(), vendorChecksss.getVendorUploadedDocument(), vendorChecksss.getDocumentname(), vendorChecksss.getAgentColor().getColorName(), vendorChecksss.getAgentColor().getColorHexCode(), null, String.valueOf(byVendorChecksVendorcheckId.getCheckUniqueId()));
 
+                    if (byVendorChecksVendorcheckId != null) {
+                        LicheckHistory latestCheckByUniqueIdAndRequestIdAndStatus = licheckHistoryRepository.findLatestCheckByUniqueIdAndRequestIdAndStatus(String.valueOf(byVendorChecksVendorcheckId.getCheckUniqueId()), byVendorChecksVendorcheckId.getRequestId());
+                        if (byVendorChecksVendorcheckId.getCheckStatus().getVendorCheckStatusMasterId() != 7l && byVendorChecksVendorcheckId.getCheckStatus().getVendorCheckStatusMasterId() != 2l) {
+                            VendorUploadChecksDto vendorUploadChecksDto = new VendorUploadChecksDto(user.getUserFirstName(), vendorChecksss.getVendorChecks().getVendorcheckId(), vendorChecksss.getVendorUploadedDocument(), vendorChecksss.getDocumentname(), vendorChecksss.getAgentColor().getColorName(), vendorChecksss.getVendorUploadDocumentPathKey(), null, vendorChecksss.getVendorChecks().getVendorCheckStatusMaster().getCheckStatusCode(), String.valueOf(byVendorChecksVendorcheckId.getCheckUniqueId()));
+                            if (byVendorChecksVendorcheckId.getCheckName() != null) {
+                                vendorUploadChecksDto.setCheckName(byVendorChecksVendorcheckId.getCheckName());
+                            }
+                            if (byVendorChecksVendorcheckId.getCheckStatus() != null) {
+                                vendorUploadChecksDto.setCheckStatus(byVendorChecksVendorcheckId.getCheckStatus().getCheckStatusCode());
+                            }
+                            if (latestCheckByUniqueIdAndRequestIdAndStatus != null) {
+                                if (byVendorChecksVendorcheckId.getCheckStatus().getCheckStatusCode().equalsIgnoreCase(latestCheckByUniqueIdAndRequestIdAndStatus.getCheckStatus())) {
+                                    vendorUploadChecksDto.setTriggeredResponse(latestCheckByUniqueIdAndRequestIdAndStatus.getCheckResponse());
+                                } else {
+                                    vendorUploadChecksDto.setTriggeredResponse("");
+                                }
+
+                            }
                             vendordocDtoList.add(vendorUploadChecksDto);
                         }
                     }
@@ -3942,10 +4824,141 @@ public class CandidateServiceImpl<T> implements CandidateService, MessageSourceA
             conventionalCandidateOutcome.setData(conventionalCReportApprovalDto);
 
         } catch (Exception e) {
+            log.info(e.getMessage());
             conventionalCandidateOutcome.setStatus("internal server error");
         }
 
         return conventionalCandidateOutcome;
+    }
+
+    public ServiceOutcome<DashboardDto> findConVendorStatusCount(DashboardDto dashboardDto) {
+
+        ServiceOutcome<DashboardDto> svcSearchResult = new ServiceOutcome<DashboardDto>();
+        List<CandidateStatusCountDto> candidateStatusCountDtoList = new ArrayList<CandidateStatusCountDto>();
+        String strToDate = "";
+        String strFromDate = "";
+        List<Object[]> resultList = null;
+        StringBuilder query = new StringBuilder();
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+        try {
+            if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l) {
+                if (dashboardDto.getFromDate().isEmpty() || dashboardDto.getToDate().isEmpty()) {
+                    strToDate = ApplicationDateUtils.getStringTodayAsDDMMYYYY();
+                    strFromDate = ApplicationDateUtils
+                            .subtractNoOfDaysFromDateAsDDMMYYYY(new SimpleDateFormat("dd/MM/yyyy").parse(strToDate), 7);
+                } else {
+                    strFromDate = dashboardDto.getFromDate();
+                    strToDate = dashboardDto.getToDate();
+                }
+                Date startDate = format.parse(strFromDate + " 00:00:00");
+                Date endDate = format.parse(strToDate + " 23:59:59");
+                query.append("select \r\n"
+                        + "	COUNT(CASE WHEN cv.check_status = 1 THEN 1 END) AS clearcount,\r\n"
+                        + " COUNT(CASE WHEN cv.check_status = 2 THEN 1 END) AS inprogresscount,\r\n"
+                        + "	COUNT(CASE WHEN cv.check_status = 3 THEN 1 END) AS insufficientcount,\r\n"
+                        + "	COUNT(CASE WHEN cv.check_status = 4 THEN 1 END) AS majordiscrepancycount,\r\n"
+                        + "	COUNT(CASE WHEN cv.check_status = 5 THEN 1 END) AS minordiscrepencycount,\r\n"
+                        + "	COUNT(CASE WHEN cv.check_status = 6 THEN 1 END) AS unabletoverifycount\r\n"
+                        + "	from \r\n"
+                        + "	t_dgv_conventional_vendorchecks_to_perform cv ,t_dgv_vendor_checks vc\r\n"
+                        + "	where \r\n"
+                        + "	vc.created_at between ?1 and ?2 \r\n"
+                        + "	and vc.vendor_id = ?3  and vc.vendor_check_id=cv.vendor_check");
+                Query squery = entityManager.createNativeQuery(query.toString());
+                squery.setParameter(1, startDate);
+                squery.setParameter(2, endDate);
+                squery.setParameter(3, dashboardDto.getUserId());
+                resultList = squery.getResultList();
+
+                if (resultList != null && resultList.size() > 0) {
+                    for (Object[] result : resultList) {
+
+                        candidateStatusCountDtoList.add(0, new CandidateStatusCountDto("Clear", "Clear", Integer.valueOf(String.valueOf(result[0]))));
+                        candidateStatusCountDtoList.add(1, new CandidateStatusCountDto("InProgress", "InProgress", Integer.valueOf(String.valueOf(result[1]))));
+                        candidateStatusCountDtoList.add(2, new CandidateStatusCountDto("InSufficiency", "InSufficiency", Integer.valueOf(String.valueOf(result[2]))));
+                        candidateStatusCountDtoList.add(3, new CandidateStatusCountDto("MajorDiscrepancy", "MajorDiscrepancy", Integer.valueOf(String.valueOf(result[3]))));
+                        candidateStatusCountDtoList.add(4, new CandidateStatusCountDto("MinorDiscrepancy", "MinorDiscrepancy", Integer.valueOf(String.valueOf(result[4]))));
+                        candidateStatusCountDtoList.add(5, new CandidateStatusCountDto("UnableToVerify", "UnableToVerify", Integer.valueOf(String.valueOf(result[5]))));
+
+                    }
+                }
+
+                DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, candidateStatusCountDtoList, dashboardDto.getUserId(), null, null);
+                svcSearchResult.setData(dashboardDtoObj);
+                svcSearchResult.setOutcome(true);
+                svcSearchResult.setMessage("Success");
+            } else {
+                svcSearchResult.setData(null);
+                svcSearchResult.setOutcome(false);
+                svcSearchResult.setMessage("please specify user.");
+            }
+        } catch (Exception ex) {
+            log.error("Exception occured in interimand finalreport method in CandidateServiceImpl-->", ex);
+            svcSearchResult.setData(null);
+            svcSearchResult.setOutcome(false);
+            svcSearchResult.setMessage(messageSource.getMessage("ERROR.MESSAGE", null, LocaleContextHolder.getLocale()));
+        }
+        return svcSearchResult;
+    }
+
+    public ServiceOutcome<DashboardDto> findConVendorTotalCount(DashboardDto dashboardDto) {
+
+        ServiceOutcome<DashboardDto> svcSearchResult = new ServiceOutcome<DashboardDto>();
+        List<CandidateStatusCountDto> candidateStatusCountDtoList = new ArrayList<CandidateStatusCountDto>();
+        String strToDate = "";
+        String strFromDate = "";
+        List<Object[]> resultList = null;
+        StringBuilder query = new StringBuilder();
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+        try {
+            if (dashboardDto.getUserId() != null && dashboardDto.getUserId() != 0l) {
+                // Hardcoding the start date as 16 Oct 2023 AS Prod movment was started on.
+                strFromDate = "16/10/2023";
+                strToDate = dashboardDto.getToDate();
+                Date startDate = format.parse(strFromDate + " 00:00:00");
+                Date endDate = format.parse(strToDate + " 23:59:59");
+
+                query.append("SELECT \r\n"
+                        + "    COUNT(CASE WHEN cv.check_status = 2 THEN 1 END) AS totalPending,\r\n"
+                        + "    COUNT(CASE WHEN cv.check_status = 3 THEN 1 END) AS totalInsufficient\r\n"
+                        + "FROM\r\n"
+                        + "t_dgv_conventional_vendorchecks_to_perform cv, t_dgv_vendor_checks vc \r\n"
+                        + "WHERE\r\n"
+                        + "	vc.created_at between ?1 and ?2 \r\n"
+                        + "	and vc.vendor_id = ?3  and vc.vendor_check_id=cv.vendor_check");
+                Query squery = entityManager.createNativeQuery(query.toString());
+                squery.setParameter(1, startDate);
+                squery.setParameter(2, endDate);
+                squery.setParameter(3, dashboardDto.getUserId());
+                resultList = squery.getResultList();
+
+                if (resultList != null && resultList.size() > 0) {
+                    for (Object[] result : resultList) {
+
+                        candidateStatusCountDtoList.add(0, new CandidateStatusCountDto("TotalInProgress", "TotalInProgress", Integer.valueOf(String.valueOf(result[0]))));
+                        candidateStatusCountDtoList.add(1, new CandidateStatusCountDto("TotalInSufficiency", "TotalInSufficiency", Integer.valueOf(String.valueOf(result[1]))));
+
+                    }
+                }
+
+                DashboardDto dashboardDtoObj = new DashboardDto(strFromDate, strToDate, null, null, candidateStatusCountDtoList, dashboardDto.getUserId(), null, null);
+                svcSearchResult.setData(dashboardDtoObj);
+                svcSearchResult.setOutcome(true);
+                svcSearchResult.setMessage("Success");
+            } else {
+                svcSearchResult.setData(null);
+                svcSearchResult.setOutcome(false);
+                svcSearchResult.setMessage("please specify user.");
+            }
+        } catch (Exception ex) {
+            log.error("Exception occured in interimand finalreport method in CandidateServiceImpl-->", ex);
+            svcSearchResult.setData(null);
+            svcSearchResult.setOutcome(false);
+            svcSearchResult.setMessage(messageSource.getMessage("ERROR.MESSAGE", null, LocaleContextHolder.getLocale()));
+        }
+        return svcSearchResult;
     }
 
 }
